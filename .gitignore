@@ -1,0 +1,8 @@
+# Arquivos de desenvolvimento / duplicatas da raiz (apenas raiz, não subdiretórios)
+/CLAUDE_CODE_PROMPT.md
+/dissertacao.json
+/manifest.json
+/styles.css
+
+# Configuração interna do Claude Code
+.claude/

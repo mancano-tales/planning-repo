@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejamento — Tales Mancano</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,0..100&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="container">
+
+<header class="masthead">
+  <div class="eyebrow">Gabinete de Trabalho · Tales Mancano</div>
+  <h1 class="title">Planejamento <em>em curso</em></h1>
+  <p class="subtitle">Projetos, prazos e fluxos de trabalho em acompanhamento</p>
+
+  <div class="meta-row">
+    <div class="meta-block">
+      <div class="meta-label">Projetos ativos</div>
+      <div class="meta-value" id="activeCount">—</div>
+    </div>
+    <div class="meta-block right">
+      <div class="meta-label">Próximo prazo</div>
+      <div class="meta-value accent" id="nextDeadline">—</div>
+    </div>
+  </div>
+</header>
+
+<section class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Tarefas totais em aberto</div>
+    <div class="stat-number"><span id="openTasks">—</span></div>
+    <div class="stat-meta" id="openTasksMeta">— em todos os projetos</div>
+  </div>
+  <div class="stat-card done-card">
+    <div class="stat-label">Progresso geral</div>
+    <div class="stat-number"><span id="overallPct">—</span><span class="unit">%</span></div>
+    <div class="stat-bar"><div class="stat-bar-fill" id="overallBar" style="width: 0%"></div></div>
+    <div class="stat-meta" id="overallMeta">— de — tarefas concluídas</div>
+  </div>
+</section>
+
+<h2 class="section-heading">Projetos</h2>
+
+<div id="projectList" class="loading">Carregando projetos…</div>
+
+<footer class="footer">
+  <p class="footer-note">
+    Cada projeto vive como um <code>JSON</code> em <code>projects/</code>.
+    Para adicionar um novo, é só criar mais um arquivo lá e referenciá-lo em <code>manifest.json</code>.
+    O progresso fica salvo no navegador automaticamente; para sincronizar entre dispositivos,
+    use <code>Exportar progress.json</code> dentro de cada projeto.
+  </p>
+</footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const STORAGE_PREFIX = 'planning-repo:project:';
+
+function today() { return new Date(); }
+
+async function loadManifest() {
+  try {
+    const res = await fetch('projects/manifest.json?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.error('Falha ao carregar manifest:', e);
+    return { projects: [] };
+  }
+}
+
+async function loadProject(id) {
+  // Tenta localStorage primeiro (estado mais recente do navegador)
+  const localKey = STORAGE_PREFIX + id;
+  try {
+    const local = localStorage.getItem(localKey);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (parsed && parsed.phases) return parsed;
+    }
+  } catch (e) {}
+
+  // Fallback: fetch do JSON canônico no repo
+  try {
+    const res = await fetch('projects/' + id + '.json?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.error('Falha ao carregar projeto', id, e);
+    return null;
+  }
+}
+
+function projectStats(project) {
+  if (!project || !Array.isArray(project.phases)) {
+    return { done: 0, total: 0, pct: 0, currentPhase: null, openTasks: 0 };
+  }
+
+  let done = 0, total = 0;
+  let currentPhase = null;
+  const now = today();
+
+  project.phases.forEach(phase => {
+    if (!Array.isArray(phase.tasks)) return;
+    phase.tasks.forEach(t => {
+      total++;
+      if (t.done) done++;
+    });
+    if (phase.start && phase.end) {
+      const s = new Date(phase.start);
+      const e = new Date(phase.end);
+      if (now >= s && now <= e && !currentPhase) {
+        currentPhase = phase;
+      }
+    }
+  });
+
+  return {
+    done,
+    total,
+    pct: total ? Math.round(done / total * 100) : 0,
+    currentPhase,
+    openTasks: total - done
+  };
+}
+
+function formatDeadline(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return Math.max(0, Math.ceil((d - today()) / (1000 * 60 * 60 * 24)));
+}
+
+function isProjectActive(project) {
+  if (!project || !project.deadline) return false;
+  const d = new Date(project.deadline);
+  return today() <= d;
+}
+
+function isProjectDone(project) {
+  const stats = projectStats(project);
+  return stats.total > 0 && stats.done === stats.total;
+}
+
+function projectCardHTML(meta, project, index) {
+  const stats = projectStats(project);
+  const active = isProjectActive(project) && !isProjectDone(project);
+  const done = isProjectDone(project);
+  const days = daysUntil(project ? project.deadline : meta.deadline);
+  const deadline = formatDeadline(project ? project.deadline : meta.deadline);
+  const urgent = days !== null && days <= 30 && !done;
+
+  const currentLabel = stats.currentPhase
+    ? stats.currentPhase.name.split('—')[0].trim()
+    : (done ? 'Concluído' : 'Não iniciado');
+
+  const statusDot = done ? 'done' : active ? 'active' : urgent ? 'urgent' : '';
+  const statusLabel = done ? 'Concluído' : active ? 'Em andamento' : urgent ? 'Prazo próximo' : 'Pendente';
+
+  return `
+    <a href="project.html?id=${encodeURIComponent(meta.id)}" class="project-card-link" style="text-decoration: none; color: inherit; display: block;">
+      <article class="project-card ${active ? 'active' : ''} ${done ? 'done' : ''}">
+        <div class="project-roman">${ROMAN[index] || (index + 1)}</div>
+        <div class="project-info">
+          <h3 class="project-name">${escapeHtml(meta.name)}</h3>
+          ${meta.subtitle ? `<p class="project-subtitle">${escapeHtml(meta.subtitle)}</p>` : ''}
+          <div class="project-meta-row">
+            <span><span class="dot ${statusDot}"></span>${statusLabel}</span>
+            <span>Fase: ${escapeHtml(currentLabel)}</span>
+            <span>${deadline}${days !== null && !done ? ' · ' + days + ' dias' : ''}</span>
+            <span>${stats.done}/${stats.total} tarefas</span>
+          </div>
+        </div>
+        <div class="project-stats-cell">
+          <div class="project-pct-block">
+            <div class="project-pct">${stats.pct}<span class="mark">%</span></div>
+          </div>
+          <div class="project-arrow">→</div>
+        </div>
+        <div class="project-mini-bar" style="grid-column: 1 / -1;">
+          <div class="project-mini-bar-fill" style="width: ${stats.pct}%"></div>
+        </div>
+      </article>
+    </a>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+async function render() {
+  const manifest = await loadManifest();
+  const listEl = document.getElementById('projectList');
+
+  if (!manifest.projects || manifest.projects.length === 0) {
+    listEl.className = 'empty-state';
+    listEl.innerHTML = 'Nenhum projeto cadastrado ainda. Adicione um arquivo em <code>projects/</code> e referencie em <code>manifest.json</code>.';
+    return;
+  }
+
+  // Carrega todos os projetos em paralelo
+  const projects = await Promise.all(manifest.projects.map(m => loadProject(m.id)));
+
+  // Estatísticas agregadas
+  let totalDone = 0, totalTasks = 0, activeProjects = 0;
+  let nearestDeadline = null;
+
+  projects.forEach((p, i) => {
+    const meta = manifest.projects[i];
+    if (p) {
+      const stats = projectStats(p);
+      totalDone += stats.done;
+      totalTasks += stats.total;
+      if (isProjectActive(p) && !isProjectDone(p)) activeProjects++;
+      const dl = p.deadline || meta.deadline;
+      if (dl && !isProjectDone(p)) {
+        const d = new Date(dl);
+        if (!nearestDeadline || d < nearestDeadline) nearestDeadline = d;
+      }
+    } else if (meta.deadline) {
+      const d = new Date(meta.deadline);
+      if (!nearestDeadline || d < nearestDeadline) nearestDeadline = d;
+      activeProjects++;
+    }
+  });
+
+  document.getElementById('activeCount').textContent = activeProjects;
+  document.getElementById('nextDeadline').textContent = nearestDeadline
+    ? formatDeadline(nearestDeadline.toISOString()) + ' · ' + Math.ceil((nearestDeadline - today()) / (1000 * 60 * 60 * 24)) + 'd'
+    : '—';
+  document.getElementById('openTasks').textContent = totalTasks - totalDone;
+  document.getElementById('openTasksMeta').textContent = (totalTasks - totalDone) + ' tarefas em aberto · ' + totalTasks + ' no total';
+  const ovPct = totalTasks ? Math.round(totalDone / totalTasks * 100) : 0;
+  document.getElementById('overallPct').textContent = ovPct;
+  document.getElementById('overallBar').style.width = ovPct + '%';
+  document.getElementById('overallMeta').textContent = totalDone + ' de ' + totalTasks + ' tarefas concluídas';
+
+  // Renderiza cards (projetos ativos primeiro, depois concluídos, depois pendentes)
+  const ranked = manifest.projects.map((m, i) => ({ meta: m, project: projects[i], idx: i }))
+    .sort((a, b) => {
+      const aDone = a.project ? isProjectDone(a.project) : false;
+      const bDone = b.project ? isProjectDone(b.project) : false;
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      const aActive = a.project ? isProjectActive(a.project) : true;
+      const bActive = b.project ? isProjectActive(b.project) : true;
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      // ordena por deadline
+      const aD = a.project ? a.project.deadline : a.meta.deadline;
+      const bD = b.project ? b.project.deadline : b.meta.deadline;
+      if (aD && bD) return new Date(aD) - new Date(bD);
+      return 0;
+    });
+
+  listEl.className = 'project-list';
+  listEl.innerHTML = ranked.map((r, i) => projectCardHTML(r.meta, r.project, i)).join('');
+}
+
+render();
+</script>
+
+</body>
+</html>

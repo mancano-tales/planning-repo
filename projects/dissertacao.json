@@ -1,0 +1,112 @@
+{
+  "id": "dissertacao",
+  "name": "Dissertação de Mestrado",
+  "subtitle": "Finalização e depósito até setembro de 2026",
+  "deadline": "2026-09-29",
+  "lastUpdated": "2026-05-10T12:00:00.000Z",
+  "phases": [
+    {
+      "id": "cap3",
+      "name": "Capítulo 3 — Qualitativo (artigo internacional)",
+      "start": "2026-05-10",
+      "end": "2026-06-20",
+      "tasks": [
+        { "text": "Finalizar coleta de dados — entrevistas e documentos pendentes", "done": false },
+        { "text": "Organizar e codificar o corpus de dados", "done": false },
+        { "text": "Aplicar framework analítico — padrões e categorias", "done": false },
+        { "text": "Definir argumento central e outline do artigo (EN)", "done": false },
+        { "text": "Redigir introdução e revisão de literatura (EN)", "done": false },
+        { "text": "Redigir seção metodológica (EN)", "done": false },
+        { "text": "Redigir seção de resultados e análise (EN)", "done": false },
+        { "text": "Redigir discussão e conclusão do artigo (EN)", "done": false },
+        { "text": "Rascunho completo enviado ao orientador", "done": false },
+        { "text": "Revisão e polish — versão submissível a periódico", "done": false }
+      ]
+    },
+    {
+      "id": "cap2",
+      "name": "Capítulo 2 — Descritivo / quantitativo",
+      "start": "2026-06-20",
+      "end": "2026-07-25",
+      "tasks": [
+        { "text": "Mapear e preparar variáveis SEDAP relevantes", "done": false },
+        { "text": "Mapear e preparar variáveis PNAD relevantes", "done": false },
+        { "text": "Cruzar com dados ENEM via identificador mascarado", "done": false },
+        { "text": "Definir estrutura e argumento descritivo do capítulo", "done": false },
+        { "text": "Produzir tabelas descritivas principais", "done": false },
+        { "text": "Produzir figuras e visualizações", "done": false },
+        { "text": "Redigir narrativa analítica das tabelas e figuras", "done": false },
+        { "text": "Rascunho completo enviado ao orientador", "done": false }
+      ]
+    },
+    {
+      "id": "cap1",
+      "name": "Capítulo 1 — Teórico / revisão de literatura",
+      "start": "2026-07-25",
+      "end": "2026-08-22",
+      "tasks": [
+        { "text": "Inventariar fichas e notas já produzidas (Zotero)", "done": false },
+        { "text": "Decidir: manter unificado ou desmembrar em partes", "done": false },
+        { "text": "Definir estrutura de seções e subseções", "done": false },
+        { "text": "Integrar fichas na narrativa corrida", "done": false },
+        { "text": "Escrever lacunas teóricas restantes (~25–35%)", "done": false },
+        { "text": "Verificar cobertura bibliográfica — OpenAlex/Zotero", "done": false },
+        { "text": "Rascunho completo enviado ao orientador", "done": false },
+        { "text": "Revisão de coesão e argumentação", "done": false }
+      ]
+    },
+    {
+      "id": "integ",
+      "name": "Integração e textos de costura",
+      "start": "2026-08-22",
+      "end": "2026-09-01",
+      "tasks": [
+        { "text": "Redigir texto de abertura da dissertação", "done": false },
+        { "text": "Redigir transição entre Cap. 1 e Cap. 2", "done": false },
+        { "text": "Redigir transição entre Cap. 2 e Cap. 3", "done": false },
+        { "text": "Verificar coerência argumentativa entre os capítulos", "done": false },
+        { "text": "Consolidar referências — Zotero → ABNT", "done": false }
+      ]
+    },
+    {
+      "id": "intro",
+      "name": "Introdução",
+      "start": "2026-09-01",
+      "end": "2026-09-08",
+      "tasks": [
+        { "text": "Redigir problema de pesquisa e justificativa", "done": false },
+        { "text": "Definir objetivos e perguntas de pesquisa", "done": false },
+        { "text": "Apresentar estrutura da dissertação", "done": false },
+        { "text": "Revisão e ajuste fino", "done": false }
+      ]
+    },
+    {
+      "id": "concl",
+      "name": "Considerações finais",
+      "start": "2026-09-08",
+      "end": "2026-09-15",
+      "tasks": [
+        { "text": "Sintetizar contribuições de cada capítulo", "done": false },
+        { "text": "Redigir argumento síntese da dissertação", "done": false },
+        { "text": "Apontar limitações do estudo", "done": false },
+        { "text": "Propor agenda futura de pesquisa", "done": false }
+      ]
+    },
+    {
+      "id": "rev",
+      "name": "Revisão geral e depósito",
+      "start": "2026-09-15",
+      "end": "2026-09-29",
+      "tasks": [
+        { "text": "Afastar-se da dissertação por 3–5 dias", "done": false },
+        { "text": "Leitura completa do início ao fim", "done": false },
+        { "text": "Correções de coesão e estilo", "done": false },
+        { "text": "Formatação ABNT — margens, fontes, sumário", "done": false },
+        { "text": "Normalização das referências (Zotero)", "done": false },
+        { "text": "Verificar apêndices e códigos R", "done": false },
+        { "text": "Submissão ao orientador para aval final", "done": false },
+        { "text": "Depósito no sistema institucional", "done": false }
+      ]
+    }
+  ]
+}

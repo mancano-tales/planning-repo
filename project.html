@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projeto — Planejamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,0..100&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="container" id="main">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <a href="index.html">← Planejamento</a> · <span id="projectIdLabel">—</span>
+  </div>
+  <h1 class="title" id="projectTitle">Carregando…</h1>
+  <p class="subtitle" id="projectSubtitle"></p>
+
+  <div class="meta-row">
+    <div class="meta-block">
+      <div class="meta-label">Prazo</div>
+      <div class="meta-value" id="deadlineLabel">—</div>
+    </div>
+    <div class="meta-block right">
+      <div class="meta-label">Dias restantes</div>
+      <div class="meta-value accent" id="daysLeft">—</div>
+    </div>
+  </div>
+</header>
+
+<section class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Progresso geral</div>
+    <div class="stat-number"><span id="overallPct">0</span><span class="unit">%</span></div>
+    <div class="stat-bar"><div class="stat-bar-fill" id="overallBar" style="width: 0%"></div></div>
+    <div class="stat-meta" id="overallMeta">— de — tarefas concluídas</div>
+  </div>
+  <div class="stat-card done-card">
+    <div class="stat-label">Fase atual</div>
+    <div class="stat-number small"><span id="currentPhase">—</span></div>
+    <div class="stat-bar"><div class="stat-bar-fill" id="currentBar" style="width: 0%"></div></div>
+    <div class="stat-meta" id="currentMeta">—</div>
+  </div>
+</section>
+
+<h2 class="section-heading">Capítulos e etapas</h2>
+
+<div class="phases" id="phases"></div>
+
+<div class="gantt" id="ganttContainer" style="display: none;">
+  <div class="gantt-title">Linha do tempo</div>
+  <div class="gantt-months" id="ganttMonths"></div>
+  <div id="ganttRows"></div>
+</div>
+
+<footer class="footer">
+  <div class="controls">
+    <button class="btn primary" onclick="exportJSON()">Exportar progress.json</button>
+    <button class="btn" onclick="document.getElementById('fileInput').click()">Importar JSON</button>
+    <button class="btn" onclick="syncFromRepo()">Sincronizar do repo</button>
+    <button class="btn danger" onclick="resetToCanonical()">Restaurar do repo</button>
+    <input type="file" id="fileInput" accept=".json" onchange="importJSON(event)">
+  </div>
+  <p class="footer-note">
+    O progresso fica salvo no navegador automaticamente. Para sincronizar entre dispositivos
+    (ou comigo, o Claude), clique em <code>Exportar progress.json</code> e substitua o arquivo
+    em <code>projects/<span id="projectFile">—</span></code> no repositório.
+  </p>
+  <div class="last-saved" id="lastSaved"></div>
+</footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+const STORAGE_PREFIX = 'planning-repo:project:';
+
+const params = new URLSearchParams(window.location.search);
+const PROJECT_ID = params.get('id');
+
+let project = null;
+let openPhases = new Set();
+
+function today() { return new Date(); }
+
+function storageKey() { return STORAGE_PREFIX + PROJECT_ID; }
+
+async function init() {
+  if (!PROJECT_ID) {
+    showError('Nenhum projeto especificado. Volte para o <a href="index.html">início</a>.');
+    return;
+  }
+
+  // Tenta localStorage primeiro
+  let loadedFromLocal = false;
+  try {
+    const raw = localStorage.getItem(storageKey());
+    if (raw) {
+      project = JSON.parse(raw);
+      loadedFromLocal = true;
+    }
+  } catch (e) {}
+
+  // Se não tem local, busca do repo
+  if (!project) {
+    try {
+      const res = await fetch('projects/' + PROJECT_ID + '.json?t=' + Date.now());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      project = await res.json();
+      // Garante estrutura
+      if (!project.phases) project.phases = [];
+      saveLocal();
+    } catch (e) {
+      showError('Não foi possível carregar o projeto <code>' + escapeHtml(PROJECT_ID) + '</code>. ' +
+                'Verifique se o arquivo <code>projects/' + escapeHtml(PROJECT_ID) + '.json</code> existe.');
+      return;
+    }
+  }
+
+  // Abre primeira fase ativa por padrão
+  const activePhase = project.phases.find(p => isActivePhase(p));
+  if (activePhase) openPhases.add(activePhase.id);
+  else if (project.phases.length > 0) openPhases.add(project.phases[0].id);
+
+  render();
+}
+
+function showError(msg) {
+  document.getElementById('main').innerHTML =
+    '<header class="masthead"><div class="eyebrow"><a href="index.html">← Planejamento</a></div>' +
+    '<h1 class="title">Erro</h1></header>' +
+    '<div class="empty-state">' + msg + '</div>';
+}
+
+function saveLocal() {
+  if (!project) return;
+  project.lastUpdated = new Date().toISOString();
+  try {
+    localStorage.setItem(storageKey(), JSON.stringify(project));
+  } catch (e) {}
+}
+
+function phaseProgress(phase) {
+  if (!Array.isArray(phase.tasks)) return { done: 0, total: 0, pct: 0 };
+  const done = phase.tasks.filter(t => t.done).length;
+  return {
+    done,
+    total: phase.tasks.length,
+    pct: phase.tasks.length ? Math.round(done / phase.tasks.length * 100) : 0
+  };
+}
+
+function overallProgress() {
+  let d = 0, t = 0;
+  project.phases.forEach(p => {
+    const pr = phaseProgress(p);
+    d += pr.done;
+    t += pr.total;
+  });
+  return { done: d, total: t, pct: t ? Math.round(d / t * 100) : 0 };
+}
+
+function isActivePhase(p) {
+  if (!p.start || !p.end) return false;
+  const now = today();
+  return now >= new Date(p.start) && now <= new Date(p.end);
+}
+
+function isDonePhase(p) {
+  return phaseProgress(p).pct === 100;
+}
+
+function daysUntilDeadline() {
+  if (!project.deadline) return null;
+  const d = new Date(project.deadline);
+  return Math.max(0, Math.ceil((d - today()) / (1000 * 60 * 60 * 24)));
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function render() {
+  document.title = (project.name || 'Projeto') + ' — Planejamento';
+  document.getElementById('projectIdLabel').textContent = PROJECT_ID;
+  document.getElementById('projectFile').textContent = PROJECT_ID + '.json';
+  document.getElementById('projectTitle').textContent = project.name || PROJECT_ID;
+  document.getElementById('projectSubtitle').textContent = project.subtitle || '';
+  document.getElementById('deadlineLabel').textContent = formatDate(project.deadline);
+
+  const days = daysUntilDeadline();
+  document.getElementById('daysLeft').textContent = days !== null ? days : '—';
+
+  const ov = overallProgress();
+  document.getElementById('overallPct').textContent = ov.pct;
+  document.getElementById('overallBar').style.width = ov.pct + '%';
+  document.getElementById('overallMeta').textContent = ov.done + ' de ' + ov.total + ' tarefas concluídas';
+
+  const current = project.phases.find(p => isActivePhase(p));
+  if (current) {
+    const pr = phaseProgress(current);
+    document.getElementById('currentPhase').textContent = current.name.split('—')[0].trim();
+    document.getElementById('currentBar').style.width = pr.pct + '%';
+    document.getElementById('currentMeta').textContent = pr.done + ' de ' + pr.total + ' · ' + pr.pct + '% completo';
+  } else {
+    document.getElementById('currentPhase').textContent = 'Sem fase ativa';
+    document.getElementById('currentBar').style.width = '0%';
+    document.getElementById('currentMeta').textContent = 'Nenhuma fase no período atual';
+  }
+
+  renderPhases();
+  renderGantt();
+  updateLastSaved();
+}
+
+function renderPhases() {
+  const phasesEl = document.getElementById('phases');
+  phasesEl.innerHTML = '';
+
+  project.phases.forEach((phase, pi) => {
+    const pr = phaseProgress(phase);
+    const active = isActivePhase(phase);
+    const done = isDonePhase(phase);
+    const open = openPhases.has(phase.id);
+
+    const phaseDiv = document.createElement('article');
+    phaseDiv.className = 'phase' + (active ? ' active' : '') + (done ? ' done' : '');
+
+    let tasksHTML = '';
+    if (open) {
+      tasksHTML = '<div class="task-list">';
+      phase.tasks.forEach((task, ti) => {
+        tasksHTML += `
+          <div class="task">
+            <input type="checkbox" class="task-cb" ${task.done ? 'checked' : ''}
+              onchange="toggleTask('${phase.id}', ${ti})" aria-label="${escapeHtml(task.text)}">
+            <span class="task-text${task.done ? ' done' : ''}" contenteditable="false"
+              onclick="startEdit(this, '${phase.id}', ${ti})"
+              onblur="finishEdit(this, '${phase.id}', ${ti})"
+              onkeydown="editKey(event, this, '${phase.id}', ${ti})">${escapeHtml(task.text)}</span>
+            <button class="task-del" onclick="delTask('${phase.id}', ${ti})" aria-label="Remover">×</button>
+          </div>`;
+      });
+      tasksHTML += `
+        <div class="task-add">
+          <input type="text" class="task-add-input" id="addInput_${phase.id}"
+            placeholder="Adicionar nova tarefa…" onkeydown="addKey(event, '${phase.id}')">
+          <button class="task-add-btn" onclick="addTask('${phase.id}')">Adicionar</button>
+        </div>
+      </div>`;
+    }
+
+    const dateLabel = (phase.start && phase.end)
+      ? formatDate(phase.start) + ' → ' + formatDate(phase.end)
+      : (phase.dates || '');
+
+    phaseDiv.innerHTML = `
+      <header class="phase-header" onclick="toggleOpen('${phase.id}', event)">
+        <div class="phase-roman">${ROMAN[pi] || (pi + 1)}</div>
+        <div class="phase-content">
+          <h3 class="phase-name">${escapeHtml(phase.name)}</h3>
+          <div class="phase-dates">${escapeHtml(dateLabel)}</div>
+        </div>
+        <div class="phase-stats">
+          <div class="phase-pct">${pr.pct}<span class="phase-pct-mark">%</span></div>
+          <div class="phase-chev${open ? ' open' : ''}">▾</div>
+        </div>
+      </header>
+      <div class="phase-progress-bar"><div class="phase-progress-fill" style="width: ${pr.pct}%"></div></div>
+      ${tasksHTML}`;
+    phasesEl.appendChild(phaseDiv);
+  });
+}
+
+function renderGantt() {
+  const phasesWithDates = project.phases.filter(p => p.start && p.end);
+  if (phasesWithDates.length === 0) {
+    document.getElementById('ganttContainer').style.display = 'none';
+    return;
+  }
+  document.getElementById('ganttContainer').style.display = 'block';
+
+  // Calcula range
+  const allStarts = phasesWithDates.map(p => new Date(p.start));
+  const allEnds = phasesWithDates.map(p => new Date(p.end));
+  const minDate = new Date(Math.min(...allStarts));
+  const maxDate = new Date(Math.max(...allEnds));
+
+  // Arredonda para o primeiro dia do mês de início e último dia do mês de fim
+  const gStart = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  const gEnd = new Date(maxDate.getFullYear(), maxDate.getMonth() + 1, 1);
+  const totalRange = gEnd - gStart;
+
+  // Renderiza cabeçalho de meses
+  const monthsContainer = document.getElementById('ganttMonths');
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const months = [];
+  let cursor = new Date(gStart);
+  while (cursor < gEnd) {
+    months.push(monthNames[cursor.getMonth()]);
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  monthsContainer.style.gridTemplateColumns = `100px repeat(${months.length}, 1fr)`;
+  monthsContainer.innerHTML = '<div></div>' + months.map(m => `<div class="gantt-month">${m}</div>`).join('');
+
+  const todayPct = ((today() - gStart) / totalRange) * 100;
+  const todayInRange = todayPct >= 0 && todayPct <= 100;
+
+  const rowsEl = document.getElementById('ganttRows');
+  rowsEl.innerHTML = '';
+  project.phases.forEach(phase => {
+    if (!phase.start || !phase.end) return;
+    const s = new Date(phase.start);
+    const e = new Date(phase.end);
+    const left = ((s - gStart) / totalRange) * 100;
+    const width = ((e - s) / totalRange) * 100;
+    const pr = phaseProgress(phase);
+    const active = isActivePhase(phase);
+    const done = isDonePhase(phase);
+
+    let barClass = 'gantt-bar upcoming';
+    if (done) barClass = 'gantt-bar done';
+    else if (active) barClass = 'gantt-bar active';
+    else if (today() > e) barClass = 'gantt-bar';
+
+    const short = phase.name.replace('Capítulo ', 'Cap. ').split('—')[0].trim();
+    const todayMarker = todayInRange ?
+      `<div class="gantt-today" style="left: ${todayPct.toFixed(2)}%"></div>` : '';
+
+    const row = document.createElement('div');
+    row.className = 'gantt-row';
+    row.innerHTML = `
+      <div class="gantt-label" title="${escapeHtml(phase.name)}">${escapeHtml(short)}</div>
+      <div class="gantt-track">
+        <div class="${barClass}" style="left: ${left.toFixed(2)}%; width: ${width.toFixed(2)}%;"></div>
+        ${todayMarker}
+      </div>`;
+    rowsEl.appendChild(row);
+  });
+}
+
+function updateLastSaved() {
+  if (!project.lastUpdated) return;
+  const d = new Date(project.lastUpdated);
+  const opts = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+  document.getElementById('lastSaved').textContent = 'Último salvamento: ' + d.toLocaleString('pt-BR', opts);
+}
+
+function toggleOpen(phaseId, ev) {
+  if (ev && ev.target.closest('.task')) return;
+  if (openPhases.has(phaseId)) openPhases.delete(phaseId);
+  else openPhases.add(phaseId);
+  saveLocal();
+  render();
+}
+
+function getPhase(phaseId) {
+  return project.phases.find(p => p.id === phaseId);
+}
+
+function toggleTask(phaseId, ti) {
+  const phase = getPhase(phaseId);
+  if (!phase) return;
+  phase.tasks[ti].done = !phase.tasks[ti].done;
+  saveLocal();
+  render();
+  showToast(phase.tasks[ti].done ? '✓ Tarefa concluída' : 'Tarefa desmarcada');
+}
+
+function startEdit(el, phaseId, ti) {
+  el.contentEditable = 'true';
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function finishEdit(el, phaseId, ti) {
+  el.contentEditable = 'false';
+  const phase = getPhase(phaseId);
+  if (!phase) return;
+  const txt = el.textContent.trim();
+  if (txt) phase.tasks[ti].text = txt;
+  else el.textContent = phase.tasks[ti].text;
+  saveLocal();
+  render();
+}
+
+function editKey(e, el, phaseId, ti) {
+  if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+  if (e.key === 'Escape') {
+    const phase = getPhase(phaseId);
+    if (phase) el.textContent = phase.tasks[ti].text;
+    el.blur();
+  }
+}
+
+function delTask(phaseId, ti) {
+  const phase = getPhase(phaseId);
+  if (!phase) return;
+  phase.tasks.splice(ti, 1);
+  saveLocal();
+  render();
+  showToast('Tarefa removida');
+}
+
+function addTask(phaseId) {
+  const inp = document.getElementById('addInput_' + phaseId);
+  if (!inp) return;
+  const txt = inp.value.trim();
+  if (!txt) return;
+  const phase = getPhase(phaseId);
+  if (!phase) return;
+  phase.tasks.push({ text: txt, done: false });
+  inp.value = '';
+  saveLocal();
+  render();
+  setTimeout(() => {
+    const ni = document.getElementById('addInput_' + phaseId);
+    if (ni) ni.focus();
+  }, 50);
+  showToast('Tarefa adicionada');
+}
+
+function addKey(e, phaseId) {
+  if (e.key === 'Enter') addTask(phaseId);
+}
+
+function exportJSON() {
+  const data = JSON.parse(JSON.stringify(project));
+  data.lastUpdated = new Date().toISOString();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = PROJECT_ID + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(PROJECT_ID + '.json baixado');
+}
+
+function importJSON(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.phases) throw new Error('formato inválido');
+      project = data;
+      saveLocal();
+      render();
+      showToast('Progresso importado');
+    } catch (err) {
+      alert('Arquivo inválido. Esperado um JSON com estrutura de projeto.');
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+async function syncFromRepo() {
+  if (!confirm('Sincronizar do JSON canônico no repositório? Isso substituirá seu progresso local atual.')) return;
+  try {
+    const res = await fetch('projects/' + PROJECT_ID + '.json?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    project = data;
+    saveLocal();
+    render();
+    showToast('Sincronizado do repositório');
+  } catch (e) {
+    alert('Não foi possível buscar o JSON do repositório.');
+  }
+}
+
+async function resetToCanonical() {
+  if (!confirm('Restaurar este projeto ao estado canônico do repositório (descarta progresso local não exportado)?')) return;
+  try {
+    localStorage.removeItem(storageKey());
+    const res = await fetch('projects/' + PROJECT_ID + '.json?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    project = await res.json();
+    saveLocal();
+    render();
+    showToast('Restaurado');
+  } catch (e) {
+    alert('Falha ao restaurar do repositório.');
+  }
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// expose
+window.toggleOpen = toggleOpen;
+window.toggleTask = toggleTask;
+window.startEdit = startEdit;
+window.finishEdit = finishEdit;
+window.editKey = editKey;
+window.delTask = delTask;
+window.addTask = addTask;
+window.addKey = addKey;
+window.exportJSON = exportJSON;
+window.importJSON = importJSON;
+window.syncFromRepo = syncFromRepo;
+window.resetToCanonical = resetToCanonical;
+
+init();
+</script>
+
+</body>
+</html>
