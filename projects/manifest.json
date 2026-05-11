@@ -7,6 +7,18 @@
       "name": "Dissertação de Mestrado",
       "subtitle": "Finalização e depósito até setembro de 2026",
       "deadline": "2026-09-29"
+    },
+    {
+      "id": "antitrust",
+      "name": "Antitrust as Industrial Policy",
+      "subtitle": "Paper com André Nahoum",
+      "deadline": "2026-12-15"
+    },
+    {
+      "id": "schedelik",
+      "name": "Resenha — Schedelik",
+      "subtitle": "Resenha de livro com Eric Rinaldi",
+      "deadline": "2026-08-31"
     }
   ]
 }

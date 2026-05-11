@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,0..100&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
+<script src="assets/shared.js" defer></script>
 </head>
 <body>
 
@@ -52,9 +53,18 @@
 <div class="phases" id="phases"></div>
 
 <div class="gantt" id="ganttContainer" style="display: none;">
-  <div class="gantt-title">Linha do tempo</div>
+  <div class="gantt-header-row">
+    <div class="gantt-title">Linha do tempo</div>
+    <div class="gantt-trajectory" id="ganttTrajectory" style="display: none;"></div>
+  </div>
   <div class="gantt-months" id="ganttMonths"></div>
-  <div id="ganttRows"></div>
+  <div class="gantt-rows-wrap">
+    <div id="ganttRows"></div>
+    <div class="gantt-overlay" id="ganttOverlay" aria-hidden="true">
+      <div class="gantt-overlay-spacer"></div>
+      <div class="gantt-overlay-tracks" id="ganttOverlayTracks"></div>
+    </div>
+  </div>
 </div>
 
 <footer class="footer">
@@ -81,7 +91,7 @@
 <div class="intensity-ctrl" id="intensityCtrl">
   <span class="intensity-icon">◐</span>
   <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="300" value="150" step="10"
+    min="30" max="600" value="150" step="10"
     oninput="setIntensity(this.value)">
 </div>
 
@@ -200,6 +210,7 @@ function isDonePhase(p) {
 function timeUntilDeadline() {
   if (!project.deadline) return null;
   const ms = new Date(project.deadline) - today();
+  if (typeof window.formatRelativeMs === 'function') return window.formatRelativeMs(ms);
   if (ms <= 0) return '0d';
   const d = Math.floor(ms / (1000 * 60 * 60 * 24));
   const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -217,6 +228,29 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+
+function fmtShortDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return '—';
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  return d.getDate() + ' ' + months[d.getMonth()];
+}
+
+function taskDeadlineInfo(dateStr, done) {
+  if (!dateStr) return { cls: 'empty', label: '+ data', title: 'Adicionar prazo' };
+  const d = new Date(dateStr + 'T23:59:59');
+  if (isNaN(d.getTime())) return { cls: 'empty', label: '+ data', title: 'Data inválida' };
+  const now = today();
+  const days = Math.ceil((d - now) / 86400000);
+  const label = fmtShortDate(dateStr);
+  let cls = 'soft';
+  let title = days >= 0 ? 'em ' + days + 'd · ' + dateStr : 'venceu há ' + (-days) + 'd · ' + dateStr;
+  if (done) { cls = 'soft'; }
+  else if (days < 0) { cls = 'overdue'; }
+  else if (days <= 7) { cls = 'urgent'; }
+  return { cls, label, title };
 }
 
 function render() {
@@ -270,6 +304,11 @@ function renderPhases() {
     if (open) {
       tasksHTML = '<div class="task-list">';
       phase.tasks.forEach((task, ti) => {
+        const dl = task.deadline;
+        const dlInfo = taskDeadlineInfo(dl, task.done);
+        const dlBtn = dl
+          ? `<button class="task-deadline ${dlInfo.cls}" onclick="editTaskDeadline(event,'${phase.id}',${ti})" title="${dlInfo.title}">${dlInfo.label}</button>`
+          : `<button class="task-deadline empty" onclick="editTaskDeadline(event,'${phase.id}',${ti})" title="Adicionar prazo">+ data</button>`;
         tasksHTML += `
           <div class="task">
             <input type="checkbox" class="task-cb" ${task.done ? 'checked' : ''}
@@ -278,6 +317,7 @@ function renderPhases() {
               onclick="startEdit(this, '${phase.id}', ${ti})"
               onblur="finishEdit(this, '${phase.id}', ${ti})"
               onkeydown="editKey(event, this, '${phase.id}', ${ti})">${escapeHtml(task.text)}</span>
+            ${dlBtn}
             <button class="task-del" onclick="delTask('${phase.id}', ${ti})" aria-label="Remover">×</button>
           </div>`;
       });
@@ -335,13 +375,21 @@ function renderGantt() {
   const monthsContainer = document.getElementById('ganttMonths');
   const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const months = [];
+  const monthBoundaries = []; // posições em % onde cada mês começa (a partir do 2º)
   let cursor = new Date(gStart);
   while (cursor < gEnd) {
-    months.push(monthNames[cursor.getMonth()]);
+    months.push({
+      label: monthNames[cursor.getMonth()],
+      year: cursor.getFullYear()
+    });
+    const boundary = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    if (boundary < gEnd) {
+      monthBoundaries.push(((boundary - gStart) / totalRange) * 100);
+    }
     cursor.setMonth(cursor.getMonth() + 1);
   }
   monthsContainer.style.gridTemplateColumns = `100px repeat(${months.length}, 1fr)`;
-  monthsContainer.innerHTML = '<div></div>' + months.map(m => `<div class="gantt-month">${m}</div>`).join('');
+  monthsContainer.innerHTML = '<div></div>' + months.map(m => `<div class="gantt-month">${m.label}</div>`).join('');
 
   const todayPct = ((today() - gStart) / totalRange) * 100;
   const todayInRange = todayPct >= 0 && todayPct <= 100;
@@ -368,8 +416,6 @@ function renderGantt() {
     else shellClass += ' upcoming';
 
     const short = phase.name.replace('Capítulo ', 'Cap. ').split('—')[0].trim();
-    const todayMarker = todayInRange ?
-      `<div class="gantt-today" style="left: ${todayPct.toFixed(2)}%"></div>` : '';
 
     const row = document.createElement('div');
     row.className = 'gantt-row';
@@ -384,11 +430,46 @@ function renderGantt() {
           onmouseleave="ganttTooltipHide()">
           <div class="gantt-bar-fill" style="width: 0%"></div>
         </div>
-        ${todayMarker}
       </div>`;
     rowsEl.appendChild(row);
     fillEls.push({ el: row.querySelector('.gantt-bar-fill'), pct: pr.pct });
   });
+
+  // Overlay: today line + month dividers (atravessam todas as fases)
+  const overlayTracks = document.getElementById('ganttOverlayTracks');
+  let overlayHTML = '';
+  monthBoundaries.forEach(pct => {
+    overlayHTML += `<div class="gantt-month-divider" style="left: ${pct.toFixed(2)}%;"></div>`;
+  });
+  if (todayInRange) {
+    overlayHTML += `<div class="gantt-today-line" style="left: ${todayPct.toFixed(2)}%;"></div>`;
+  }
+  overlayTracks.innerHTML = overlayHTML;
+
+  // Badge de trajetória: planejado linear vs. progresso real
+  const trajEl = document.getElementById('ganttTrajectory');
+  const ov = overallProgress();
+  if (todayInRange && ov.total > 0) {
+    const plannedPct = Math.max(0, Math.min(100, todayPct));
+    const actualPct = ov.pct;
+    const delta = Math.round(actualPct - plannedPct);
+    let cls, label;
+    if (Math.abs(delta) <= 3) {
+      cls = 'on-track';
+      label = `No prazo · <span class="gtraj-num">${actualPct}%</span> vs. previsto ${Math.round(plannedPct)}%`;
+    } else if (delta > 0) {
+      cls = 'ahead';
+      label = `Adiantado <span class="gtraj-num">+${delta}%</span> · ${actualPct}% real`;
+    } else {
+      cls = 'behind';
+      label = `Atrasado <span class="gtraj-num">${delta}%</span> · ${actualPct}% real`;
+    }
+    trajEl.className = 'gantt-trajectory ' + cls;
+    trajEl.innerHTML = label;
+    trajEl.style.display = '';
+  } else {
+    trajEl.style.display = 'none';
+  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -463,6 +544,49 @@ function delTask(phaseId, ti) {
   saveLocal();
   render();
   showToast('Tarefa removida');
+}
+
+function editTaskDeadline(ev, phaseId, ti) {
+  ev.stopPropagation();
+  const phase = getPhase(phaseId);
+  if (!phase) return;
+  const task = phase.tasks[ti];
+  const btn = ev.currentTarget;
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'task-deadline-input';
+  inp.value = task.deadline || '';
+  if (phase.end) inp.max = phase.end;
+  if (phase.start) inp.min = phase.start;
+  btn.replaceWith(inp);
+  inp.focus();
+  if (inp.showPicker) try { inp.showPicker(); } catch (e) {}
+
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    const v = inp.value || null;
+    task.deadline = v;
+    if (!v) delete task.deadline;
+    saveLocal();
+    render();
+  };
+  inp.addEventListener('change', commit);
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { committed = true; render(); }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Permitir limpar via Ctrl+Backspace
+      if (e.ctrlKey || e.metaKey) {
+        committed = true;
+        delete task.deadline;
+        saveLocal();
+        render();
+      }
+    }
+  });
 }
 
 function addTask(phaseId) {
@@ -609,6 +733,7 @@ window.finishEdit = finishEdit;
 window.editKey = editKey;
 window.delTask = delTask;
 window.addTask = addTask;
+window.editTaskDeadline = editTaskDeadline;
 window.addKey = addKey;
 window.exportJSON = exportJSON;
 window.importJSON = importJSON;

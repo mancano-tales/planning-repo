@@ -8,10 +8,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,0..100&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
+<script src="assets/shared.js" defer></script>
 </head>
 <body>
 
 <div class="container">
+
+<section class="today-panel">
+  <div class="today-time" id="todayTime">—<span class="sep">:</span>—</div>
+  <div class="today-right">
+    <div class="today-date" id="todayDate">—</div>
+    <div class="today-greeting" id="todayGreeting">Olá, <em>Tales</em></div>
+    <div class="today-focus-wrap">
+      <span class="today-focus-label">Foco</span>
+      <input type="text" class="today-focus-input" id="todayFocus"
+        placeholder="O que importa hoje?" maxlength="120">
+      <button type="button" class="today-focus-check" id="todayFocusCheck"
+        aria-label="Marcar foco como concluído" title="Marcar como concluído">✓</button>
+    </div>
+  </div>
+</section>
 
 <header class="masthead">
   <div class="eyebrow">Gabinete de Trabalho · Tales Mancano · <a href="music.html">Música</a></div>
@@ -44,6 +60,9 @@
   </div>
 </section>
 
+<h2 class="section-heading">Agenda · próximos prazos de tarefas</h2>
+<div id="agendaList" class="agenda-empty">—</div>
+
 <h2 class="section-heading">Projetos</h2>
 
 <div id="projectList" class="loading">Carregando projetos…</div>
@@ -75,7 +94,7 @@
 <div class="intensity-ctrl" id="intensityCtrl">
   <span class="intensity-icon">◐</span>
   <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="300" value="150" step="10"
+    min="30" max="600" value="150" step="10"
     oninput="setIntensity(this.value)">
 </div>
 
@@ -180,10 +199,16 @@ function daysUntil(dateStr) {
 }
 
 function timeUntilLabel(ms) {
+  if (typeof window.formatRelativeMs === 'function') return window.formatRelativeMs(ms);
   if (ms <= 0) return '0d';
   const d = Math.floor(ms / (1000 * 60 * 60 * 24));
   const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   return d + 'd ' + h + 'h';
+}
+
+function daysLabel(days) {
+  if (typeof window.formatRelativeDays === 'function') return window.formatRelativeDays(days);
+  return days + ' dias';
 }
 
 function isProjectActive(project) {
@@ -222,7 +247,7 @@ function projectCardHTML(meta, project, index) {
           <div class="project-meta-row">
             <span><span class="dot ${statusDot}"></span>${statusLabel}</span>
             <span>Fase: ${escapeHtml(currentLabel)}</span>
-            <span>${deadline}${days !== null && !done ? ' · ' + days + ' dias' : ''}</span>
+            <span>${deadline}${days !== null && !done ? ' · ' + daysLabel(days) : ''}</span>
             <span>${stats.done}/${stats.total} tarefas</span>
           </div>
         </div>
@@ -311,6 +336,64 @@ async function render() {
 
   listEl.className = 'project-list';
   listEl.innerHTML = ranked.map((r, i) => projectCardHTML(r.meta, r.project, i)).join('');
+
+  renderAgenda(manifest.projects, projects);
+}
+
+function renderAgenda(metas, projects) {
+  const items = [];
+  projects.forEach((p, i) => {
+    if (!p || !Array.isArray(p.phases)) return;
+    const projName = (metas[i] && metas[i].name) || p.name || metas[i].id;
+    const projId = metas[i].id;
+    p.phases.forEach(phase => {
+      if (!Array.isArray(phase.tasks)) return;
+      phase.tasks.forEach((t, ti) => {
+        if (!t.deadline || t.done) return;
+        items.push({
+          projId,
+          projName,
+          phaseName: phase.name,
+          phaseId: phase.id,
+          task: t.text,
+          deadline: t.deadline,
+        });
+      });
+    });
+  });
+
+  const el = document.getElementById('agendaList');
+  if (!el) return;
+  if (items.length === 0) {
+    el.className = 'agenda-empty';
+    el.innerHTML = 'Nenhuma tarefa com prazo ainda. Abra um projeto e clique em <code>+ data</code> em uma tarefa para definir.';
+    return;
+  }
+  items.sort((a, b) => a.deadline.localeCompare(b.deadline));
+  const now = today();
+  const monthsShort = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  el.className = 'agenda-list';
+  el.innerHTML = items.slice(0, 8).map(it => {
+    const d = new Date(it.deadline + 'T23:59:59');
+    const days = Math.ceil((d - now) / 86400000);
+    let cls = '';
+    let rel;
+    if (days < 0) { cls = 'overdue'; rel = 'há ' + (-days) + 'd'; }
+    else if (days === 0) { cls = 'urgent'; rel = 'hoje'; }
+    else if (days <= 7) { cls = 'urgent'; rel = 'em ' + days + 'd'; }
+    else { rel = daysLabel(days); }
+    const dateLabel = d.getDate() + ' ' + monthsShort[d.getMonth()];
+    const phaseShort = (it.phaseName || '').split('—')[0].trim();
+    return `
+      <a class="agenda-row ${cls}" href="project.html?id=${encodeURIComponent(it.projId)}">
+        <div class="agenda-date">${dateLabel}<span class="agenda-rel">${rel}</span></div>
+        <div class="agenda-content">
+          <div class="agenda-task">${escapeHtml(it.task)}</div>
+          <div class="agenda-project">${escapeHtml(it.projName)} · <span class="agenda-phase">${escapeHtml(phaseShort)}</span></div>
+        </div>
+        <div class="agenda-arrow">→</div>
+      </a>`;
+  }).join('');
 }
 
 render();
@@ -413,6 +496,79 @@ function closePlayer() {
 
 window.closePlayer = closePlayer;
 initPlayer();
+
+// ── TODAY PANEL: relógio, saudação, foco ─
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+function updateClock() {
+  const now = new Date();
+  const h = pad2(now.getHours());
+  const m = pad2(now.getMinutes());
+  const el = document.getElementById('todayTime');
+  if (el) el.innerHTML = h + '<span class="sep">:</span>' + m;
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  let g;
+  if (h < 5) g = 'Boa madrugada';
+  else if (h < 12) g = 'Bom dia';
+  else if (h < 18) g = 'Boa tarde';
+  else g = 'Boa noite';
+  const el = document.getElementById('todayGreeting');
+  if (el) el.innerHTML = g + ', <em>Tales</em>';
+}
+
+function updateDate() {
+  const now = new Date();
+  const wd = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'][now.getDay()];
+  const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const el = document.getElementById('todayDate');
+  if (el) el.textContent = wd + ' · ' + now.getDate() + ' de ' + months[now.getMonth()];
+}
+
+const FOCUS_KEY_PREFIX = 'planning-repo:focus:';
+function focusKey() {
+  const d = new Date();
+  return FOCUS_KEY_PREFIX + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+function initFocus() {
+  const inp = document.getElementById('todayFocus');
+  const btn = document.getElementById('todayFocusCheck');
+  if (!inp || !btn) return;
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(focusKey()) || 'null'); } catch(e) {}
+  if (stored && typeof stored === 'object') {
+    inp.value = stored.text || '';
+    if (stored.done) {
+      inp.classList.add('done');
+      btn.classList.add('done');
+    }
+  }
+  function save() {
+    const text = inp.value.trim();
+    const done = btn.classList.contains('done');
+    if (!text && !done) {
+      try { localStorage.removeItem(focusKey()); } catch(e) {}
+      return;
+    }
+    try { localStorage.setItem(focusKey(), JSON.stringify({ text, done })); } catch(e) {}
+  }
+  inp.addEventListener('input', save);
+  inp.addEventListener('blur', save);
+  btn.addEventListener('click', () => {
+    const isDone = btn.classList.toggle('done');
+    inp.classList.toggle('done', isDone);
+    save();
+  });
+}
+
+updateClock();
+updateGreeting();
+updateDate();
+initFocus();
+setInterval(() => { updateClock(); updateGreeting(); }, 30000);
 
 // ── MOUSE BLOOM ───────────────────────────
 document.addEventListener('mousemove', e => {

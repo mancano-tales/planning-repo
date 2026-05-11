@@ -11,15 +11,15 @@
       "start": "2026-05-10",
       "end": "2026-06-20",
       "tasks": [
-        { "text": "Finalizar coleta de dados — entrevistas e documentos pendentes", "done": false },
-        { "text": "Organizar e codificar o corpus de dados", "done": false },
+        { "text": "Finalizar coleta de dados — entrevistas e documentos pendentes", "done": false, "deadline": "2026-05-25" },
+        { "text": "Organizar e codificar o corpus de dados", "done": false, "deadline": "2026-06-05" },
         { "text": "Aplicar framework analítico — padrões e categorias", "done": false },
         { "text": "Definir argumento central e outline do artigo (EN)", "done": false },
         { "text": "Redigir introdução e revisão de literatura (EN)", "done": false },
         { "text": "Redigir seção metodológica (EN)", "done": false },
         { "text": "Redigir seção de resultados e análise (EN)", "done": false },
         { "text": "Redigir discussão e conclusão do artigo (EN)", "done": false },
-        { "text": "Rascunho completo enviado ao orientador", "done": false },
+        { "text": "Rascunho completo enviado ao orientador", "done": false, "deadline": "2026-06-15" },
         { "text": "Revisão e polish — versão submissível a periódico", "done": false }
       ]
     },
@@ -104,8 +104,8 @@
         { "text": "Formatação ABNT — margens, fontes, sumário", "done": false },
         { "text": "Normalização das referências (Zotero)", "done": false },
         { "text": "Verificar apêndices e códigos R", "done": false },
-        { "text": "Submissão ao orientador para aval final", "done": false },
-        { "text": "Depósito no sistema institucional", "done": false }
+        { "text": "Submissão ao orientador para aval final", "done": false, "deadline": "2026-09-23" },
+        { "text": "Depósito no sistema institucional", "done": false, "deadline": "2026-09-29" }
       ]
     }
   ]
