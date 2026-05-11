@@ -67,7 +67,6 @@ body {
   min-height: 100vh;
   font-feature-settings: "kern", "liga", "ss01";
   background-image:
-    repeating-conic-gradient(at 50% 115%, rgba(212, 148, 52, 0.055) 0deg 2deg, transparent 2deg 9deg),
     radial-gradient(circle at var(--mx, 50%) var(--my, 80%), rgba(208, 98, 36, 0.13) 0%, transparent 38%),
     radial-gradient(ellipse 140% 55% at 50% 125%, rgba(174, 67, 30, 0.24) 0%, transparent 60%),
     radial-gradient(circle at 90% 92%, rgba(174, 67, 30, 0.17) 0%, transparent 30%),
