@@ -4,7 +4,7 @@
 
 :root {
   --wp-url: none;
-  --wp-a: 0.22;
+  --wp-a: 0.6;
   --paper: #F7F2E8;
   --paper-shade: #EFE9DC;
   --paper-deep: #E5DDCB;
@@ -74,21 +74,7 @@ html {
   background: var(--paper);
 }
 
-/* Camada de wallpaper — fica fixa atrás de tudo, com opacidade baixa.
-   Injetada via JS como <div class="wp-bg">. */
-.wp-bg {
-  position: fixed;
-  inset: 0;
-  background-image: var(--wp-url);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: var(--wp-a);
-  filter: saturate(0.82) contrast(0.95);
-  z-index: -1;
-  pointer-events: none;
-  transition: opacity 0.6s ease, background-image 0.6s ease;
-}
+/* Wallpaper agora vive apenas no topo do site, dentro do .today-panel. */
 
 body {
   font-family: var(--sans);
@@ -207,6 +193,53 @@ a { color: inherit; text-decoration: none; }
 }
 
 .meta-value.accent { color: var(--accent); }
+
+/* Cascata de prazo: meses → semanas → dias → horas/min */
+.deadline-cascade {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-feature-settings: "tnum";
+  line-height: 1.05;
+}
+
+.dl-line {
+  font-family: var(--serif);
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+
+.dl-months {
+  font-size: 1.85rem;
+  font-weight: 400;
+  font-variation-settings: "opsz" 144;
+}
+
+.dl-weeks {
+  font-size: 1.05rem;
+  font-style: italic;
+  font-variation-settings: "opsz" 18;
+  color: var(--accent-deep);
+}
+
+.dl-days {
+  font-size: 0.95rem;
+  font-style: italic;
+  font-variation-settings: "opsz" 14;
+  color: var(--ink-soft);
+}
+
+.dl-hours {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  font-style: normal;
+  margin-top: 2px;
+}
+
+.deadline-cascade.overdue .dl-line { color: var(--danger); }
 
 /* ============================================
    SECTION HEADING
@@ -336,6 +369,61 @@ a { color: inherit; text-decoration: none; }
   padding-left: 1rem;
   margin-left: -1rem;
 }
+
+.project-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.15s;
+}
+
+.project-card-link.dragging {
+  opacity: 0.35;
+}
+
+.project-card-link.drop-above {
+  border-top: 2px solid var(--accent);
+}
+
+.project-card-link.drop-below {
+  border-bottom: 2px solid var(--accent);
+}
+
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-faint);
+  font-size: 14px;
+  line-height: 1;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  user-select: none;
+  flex-shrink: 0;
+  font-family: var(--sans);
+}
+
+.project-card:hover .drag-handle,
+.task:hover .drag-handle {
+  opacity: 0.7;
+}
+
+.drag-handle:hover { color: var(--accent); opacity: 1; }
+.drag-handle:active { cursor: grabbing; }
+
+.task .drag-handle {
+  width: 16px;
+  height: 16px;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.task.dragging { opacity: 0.35; }
+.task.drop-above { border-top: 2px solid var(--accent); }
+.task.drop-below { border-bottom: 2px solid var(--accent); }
 
 @media (max-width: 640px) {
   .project-card { grid-template-columns: 32px 1fr; gap: 0.75rem; }
@@ -1318,13 +1406,73 @@ a { color: inherit; text-decoration: none; }
    ============================================ */
 
 .today-panel {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 1.5rem 2rem;
   align-items: end;
   margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
+  padding: 2rem 2rem 2.5rem 1.5rem;
   border-bottom: 1px solid var(--rule);
+  isolation: isolate;
+}
+
+/* Wallpaper só no topo: cobre o today-panel, faz fade out para o paper
+   na borda inferior, deixando o gradient terracota/oliva tomar conta abaixo. */
+.today-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--wp-url);
+  background-size: cover;
+  background-position: center 35%;
+  background-repeat: no-repeat;
+  opacity: var(--wp-a, 0.55);
+  filter: saturate(0.85) contrast(0.94);
+  z-index: -2;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 30%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0) 100%);
+          mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 30%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0) 100%);
+  animation: wp-fade-in 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: opacity 0.5s ease, background-image 0.5s ease;
+}
+
+/* Véu tinta sobre o wallpaper, no tom paper, para legibilidade do texto.
+   Também aplica um leve gradient terracota/oliva no fundo (mistura quente). */
+.today-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg,
+      rgb(208 98 36 / 0.10) 0%,
+      transparent 35%,
+      rgb(122 123 50 / 0.08) 75%,
+      rgb(208 98 36 / 0.06) 100%),
+    linear-gradient(to bottom,
+      rgb(247 242 232 / 0.25) 0%,
+      rgb(247 242 232 / 0.55) 100%);
+  z-index: -1;
+  pointer-events: none;
+  animation: wp-fade-in 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes wp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .today-panel::after {
+    background:
+      linear-gradient(135deg,
+        rgb(208 98 36 / 0.16) 0%,
+        transparent 35%,
+        rgb(122 123 50 / 0.12) 75%,
+        rgb(208 98 36 / 0.08) 100%),
+      linear-gradient(to bottom,
+        rgb(27 24 20 / 0.30) 0%,
+        rgb(27 24 20 / 0.65) 100%);
+  }
 }
 
 @media (max-width: 640px) {
@@ -1494,6 +1642,20 @@ a { color: inherit; text-decoration: none; }
   left: 1.25rem;
   z-index: 250;
   font-family: var(--sans);
+  touch-action: none;
+}
+
+.pomo-widget.dragging {
+  opacity: 0.85;
+  transition: none;
+}
+
+.pomo-widget.dragging .pomo-pill {
+  cursor: grabbing;
+}
+
+.pomo-pill {
+  cursor: grab;
 }
 
 /* Ajuste quando o mini-player está ativo, para não sobrepor */

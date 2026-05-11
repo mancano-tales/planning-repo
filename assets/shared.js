@@ -238,6 +238,7 @@
 
   function injectPomoWidget() {
     if (document.getElementById('pomoWidget')) return;
+    const host = document.body;
     const el = document.createElement('div');
     el.id = 'pomoWidget';
     el.className = 'pomo-widget';
@@ -274,7 +275,7 @@
           </label>
         </div>
       </div>`;
-    document.body.appendChild(el);
+    host.appendChild(el);
 
     document.getElementById('pomoPill').addEventListener('click', (ev) => {
       // Se panel aberto, fecha; senão abre. Permitir clique no ícone para start/pause rápido.
@@ -328,6 +329,99 @@
 
     // Permissão de notificação ao primeiro clique
     document.getElementById('pomoPill').addEventListener('click', requestNotifOnce, { once: true });
+
+    enablePomoDrag();
+    restorePomoPosition();
+  }
+
+  // ── DRAG do pomodoro ──────────────────────
+  // Permite arrastar o widget. Posição salva em localStorage como
+  // { top, left } em pixels relativos ao viewport.
+  const POMO_POS_KEY = 'planning-repo:pomodoro-pos';
+  let _dragState = null;
+  let _dragMoved = false;
+
+  function restorePomoPosition() {
+    try {
+      const raw = localStorage.getItem(POMO_POS_KEY);
+      if (!raw) return;
+      const pos = JSON.parse(raw);
+      if (!pos || typeof pos.top !== 'number' || typeof pos.left !== 'number') return;
+      applyPomoPosition(pos.top, pos.left);
+    } catch (e) {}
+  }
+
+  function applyPomoPosition(top, left) {
+    const widget = document.getElementById('pomoWidget');
+    if (!widget) return;
+    const w = widget.offsetWidth || 130;
+    const h = widget.offsetHeight || 40;
+    const maxLeft = window.innerWidth - w - 4;
+    const maxTop = window.innerHeight - h - 4;
+    top = Math.max(4, Math.min(maxTop, top));
+    left = Math.max(4, Math.min(maxLeft, left));
+    widget.style.top = top + 'px';
+    widget.style.left = left + 'px';
+    widget.style.bottom = 'auto';
+    widget.style.right = 'auto';
+  }
+
+  function enablePomoDrag() {
+    const widget = document.getElementById('pomoWidget');
+    const pill = document.getElementById('pomoPill');
+    if (!widget || !pill) return;
+
+    function onDown(ev) {
+      // Botão esquerdo apenas; ignorar quando clica nos botões internos
+      if (ev.button !== undefined && ev.button !== 0) return;
+      const rect = widget.getBoundingClientRect();
+      _dragState = {
+        startX: ev.clientX,
+        startY: ev.clientY,
+        origLeft: rect.left,
+        origTop: rect.top,
+      };
+      _dragMoved = false;
+      widget.classList.add('dragging');
+      pill.setPointerCapture && pill.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
+    }
+    function onMove(ev) {
+      if (!_dragState) return;
+      const dx = ev.clientX - _dragState.startX;
+      const dy = ev.clientY - _dragState.startY;
+      if (!_dragMoved && Math.hypot(dx, dy) > 4) _dragMoved = true;
+      applyPomoPosition(_dragState.origTop + dy, _dragState.origLeft + dx);
+    }
+    function onUp(ev) {
+      if (!_dragState) return;
+      const widgetEl = document.getElementById('pomoWidget');
+      widgetEl.classList.remove('dragging');
+      try { pill.releasePointerCapture && pill.releasePointerCapture(ev.pointerId); } catch (e) {}
+      if (_dragMoved) {
+        const rect = widgetEl.getBoundingClientRect();
+        try { localStorage.setItem(POMO_POS_KEY, JSON.stringify({ top: rect.top, left: rect.left })); } catch (e) {}
+        // Suprime o próximo click para não abrir o panel
+        const swallow = (e) => { e.stopPropagation(); e.preventDefault(); pill.removeEventListener('click', swallow, true); };
+        pill.addEventListener('click', swallow, true);
+      }
+      _dragState = null;
+    }
+
+    pill.addEventListener('pointerdown', onDown);
+    pill.addEventListener('pointermove', onMove);
+    pill.addEventListener('pointerup', onUp);
+    pill.addEventListener('pointercancel', onUp);
+
+    // Reposiciona ao redimensionar a janela
+    window.addEventListener('resize', () => {
+      try {
+        const raw = localStorage.getItem(POMO_POS_KEY);
+        if (!raw) return;
+        const pos = JSON.parse(raw);
+        applyPomoPosition(pos.top, pos.left);
+      } catch (e) {}
+    });
   }
 
   function requestNotifOnce() {
@@ -440,15 +534,13 @@
     document.documentElement.style.setProperty('--wp-url', `url("${base}")`);
   }
 
-  function ensureWpLayer() {
-    if (document.querySelector('.wp-bg')) return;
-    const el = document.createElement('div');
-    el.className = 'wp-bg';
-    document.body.insertBefore(el, document.body.firstChild);
-  }
-
   function initWallpaper() {
-    ensureWpLayer();
+    // Só faz sentido se houver um .today-panel na página (apenas index.html)
+    if (!document.querySelector('.today-panel')) {
+      // Limpa a var pra não vazar o filename
+      document.documentElement.style.setProperty('--wp-url', 'none');
+      return;
+    }
     let chosen = null;
     try {
       const raw = localStorage.getItem(WP_KEY);

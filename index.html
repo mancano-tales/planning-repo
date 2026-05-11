@@ -238,7 +238,7 @@ function projectCardHTML(meta, project, index) {
   const statusLabel = done ? 'Concluído' : active ? 'Em andamento' : urgent ? 'Prazo próximo' : 'Pendente';
 
   return `
-    <a href="project.html?id=${encodeURIComponent(meta.id)}" class="project-card-link" style="text-decoration: none; color: inherit; display: block;">
+    <a href="project.html?id=${encodeURIComponent(meta.id)}" class="project-card-link" draggable="true" data-id="${escapeHtml(meta.id)}">
       <article class="project-card ${active ? 'active' : ''} ${done ? 'done' : ''}">
         <div class="project-roman">${ROMAN[index] || (index + 1)}</div>
         <div class="project-info">
@@ -252,6 +252,7 @@ function projectCardHTML(meta, project, index) {
           </div>
         </div>
         <div class="project-stats-cell">
+          <span class="drag-handle" aria-label="Arrastar para reordenar" title="Arrastar para reordenar">⋮⋮</span>
           <div class="project-pct-block">
             <div class="project-pct">${stats.pct}<span class="mark">%</span></div>
           </div>
@@ -263,6 +264,88 @@ function projectCardHTML(meta, project, index) {
       </article>
     </a>
   `;
+}
+
+// ── ORDEM CUSTOMIZADA DOS PROJETOS ─────────
+// Os IDs em ordem ficam em localStorage. Caso falte algum (projeto novo),
+// é anexado ao final na ordem do manifest.
+const PROJECT_ORDER_KEY = 'planning-repo:project-order';
+
+function loadProjectOrder() {
+  try {
+    const raw = localStorage.getItem(PROJECT_ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : null;
+  } catch (e) { return null; }
+}
+
+function saveProjectOrder(ids) {
+  try { localStorage.setItem(PROJECT_ORDER_KEY, JSON.stringify(ids)); } catch (e) {}
+}
+
+function applyProjectOrder(manifestProjects) {
+  const stored = loadProjectOrder();
+  if (!stored) return manifestProjects;
+  const byId = {};
+  manifestProjects.forEach(p => { byId[p.id] = p; });
+  const ordered = [];
+  stored.forEach(id => { if (byId[id]) { ordered.push(byId[id]); delete byId[id]; } });
+  // Anexa projetos novos que não estavam na ordem salva
+  manifestProjects.forEach(p => { if (byId[p.id]) ordered.push(p); });
+  return ordered;
+}
+
+function installProjectDnD() {
+  const list = document.getElementById('projectList');
+  if (!list) return;
+  let dragId = null;
+
+  list.querySelectorAll('.project-card-link').forEach(link => {
+    link.addEventListener('dragstart', (e) => {
+      dragId = link.dataset.id;
+      link.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
+    });
+    link.addEventListener('dragend', () => {
+      link.classList.remove('dragging');
+      list.querySelectorAll('.project-card-link').forEach(el => {
+        el.classList.remove('drop-above', 'drop-below');
+      });
+      dragId = null;
+    });
+    link.addEventListener('dragover', (e) => {
+      if (!dragId || link.dataset.id === dragId) return;
+      e.preventDefault();
+      const rect = link.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      link.classList.toggle('drop-above', !after);
+      link.classList.toggle('drop-below', after);
+    });
+    link.addEventListener('dragleave', () => {
+      link.classList.remove('drop-above', 'drop-below');
+    });
+    link.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (!dragId || link.dataset.id === dragId) return;
+      const rect = link.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      const ids = [...list.querySelectorAll('.project-card-link')].map(el => el.dataset.id);
+      const from = ids.indexOf(dragId);
+      let to = ids.indexOf(link.dataset.id);
+      if (from < 0 || to < 0) return;
+      ids.splice(from, 1);
+      to = ids.indexOf(link.dataset.id);
+      if (after) to = to + 1;
+      ids.splice(to, 0, dragId);
+      saveProjectOrder(ids);
+      // Re-renderiza chamando render() de novo
+      render();
+    });
+    // Evita que o click pós-drag abra o projeto: o "drag" do anchor não
+    // dispara click no fim, então não precisa de proteção extra.
+  });
 }
 
 function escapeHtml(s) {
@@ -280,6 +363,10 @@ async function render() {
     listEl.innerHTML = 'Nenhum projeto cadastrado ainda. Adicione um arquivo em <code>projects/</code> e referencie em <code>manifest.json</code>.';
     return;
   }
+
+  // Aplica ordem customizada salva (drag-and-drop do usuário)
+  manifest.projects = applyProjectOrder(manifest.projects);
+  const hasCustomOrder = !!loadProjectOrder();
 
   // Carrega todos os projetos em paralelo
   const projects = await Promise.all(manifest.projects.map(m => loadProject(m.id)));
@@ -318,25 +405,22 @@ async function render() {
   document.getElementById('overallBar').style.width = ovPct + '%';
   document.getElementById('overallMeta').textContent = totalDone + ' de ' + totalTasks + ' tarefas concluídas';
 
-  // Renderiza cards (projetos ativos primeiro, depois concluídos, depois pendentes)
-  const ranked = manifest.projects.map((m, i) => ({ meta: m, project: projects[i], idx: i }))
-    .sort((a, b) => {
+  // Ordem = manifest (já reordenado pelo drag salvo, se houver).
+  // Projetos concluídos vão pro fim, exceto se o user salvou ordem customizada.
+  let ranked = manifest.projects.map((m, i) => ({ meta: m, project: projects[i], idx: i }));
+  if (!hasCustomOrder) {
+    ranked.sort((a, b) => {
       const aDone = a.project ? isProjectDone(a.project) : false;
       const bDone = b.project ? isProjectDone(b.project) : false;
       if (aDone !== bDone) return aDone ? 1 : -1;
-      const aActive = a.project ? isProjectActive(a.project) : true;
-      const bActive = b.project ? isProjectActive(b.project) : true;
-      if (aActive !== bActive) return aActive ? -1 : 1;
-      // ordena por deadline
-      const aD = a.project ? a.project.deadline : a.meta.deadline;
-      const bD = b.project ? b.project.deadline : b.meta.deadline;
-      if (aD && bD) return new Date(aD) - new Date(bD);
       return 0;
     });
+  }
 
   listEl.className = 'project-list';
   listEl.innerHTML = ranked.map((r, i) => projectCardHTML(r.meta, r.project, i)).join('');
 
+  installProjectDnD();
   renderAgenda(manifest.projects, projects);
 }
 

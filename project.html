@@ -28,7 +28,12 @@
     </div>
     <div class="meta-block right">
       <div class="meta-label">Tempo restante</div>
-      <div class="meta-value accent" id="daysLeft">—</div>
+      <div class="deadline-cascade" id="deadlineCascade">
+        <div class="dl-line dl-months" id="dlMonths">—</div>
+        <div class="dl-line dl-weeks" id="dlWeeks">—</div>
+        <div class="dl-line dl-days" id="dlDays">—</div>
+        <div class="dl-line dl-hours" id="dlHours">—</div>
+      </div>
     </div>
   </div>
 </header>
@@ -209,12 +214,56 @@ function isDonePhase(p) {
 
 function timeUntilDeadline() {
   if (!project.deadline) return null;
-  const ms = new Date(project.deadline) - today();
+  const ms = new Date(project.deadline + 'T23:59:59') - today();
   if (typeof window.formatRelativeMs === 'function') return window.formatRelativeMs(ms);
   if (ms <= 0) return '0d';
   const d = Math.floor(ms / (1000 * 60 * 60 * 24));
   const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   return d + 'd ' + h + 'h';
+}
+
+// Quebra ms em meses/semanas/dias/horas e minutos para a cascata visual.
+function deadlineBreakdown(ms) {
+  if (ms <= 0) {
+    return {
+      overdue: true,
+      monthsLine: 'vencido',
+      weeksLine: '',
+      daysLine: '',
+      hoursLine: '',
+    };
+  }
+  const totalDays = ms / 86400000;
+  const months = totalDays / 30.4375;   // média
+  const weeks = totalDays / 7;
+  const days = Math.floor(totalDays);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  const minutes = Math.floor((ms % 3600000) / 60000);
+
+  // Formata meses com até 1 casa decimal quando faz sentido
+  const monthsStr = months >= 10
+    ? Math.round(months) + ' meses'
+    : (Math.round(months * 10) / 10).toString().replace('.', ',') + (months === 1 ? ' mês' : ' meses');
+
+  return {
+    overdue: false,
+    monthsLine: monthsStr,
+    weeksLine: Math.round(weeks) + ' semanas',
+    daysLine: days + ' dias',
+    hoursLine: hours + 'h ' + (minutes < 10 ? '0' : '') + minutes + 'min',
+  };
+}
+
+function renderDeadlineCascade() {
+  const cascade = document.getElementById('deadlineCascade');
+  if (!cascade || !project || !project.deadline) return;
+  const ms = new Date(project.deadline + 'T23:59:59') - new Date();
+  const bd = deadlineBreakdown(ms);
+  cascade.classList.toggle('overdue', !!bd.overdue);
+  document.getElementById('dlMonths').textContent = bd.monthsLine;
+  document.getElementById('dlWeeks').textContent = bd.weeksLine;
+  document.getElementById('dlDays').textContent = bd.daysLine;
+  document.getElementById('dlHours').textContent = bd.hoursLine;
 }
 
 function formatDate(dateStr) {
@@ -261,8 +310,7 @@ function render() {
   document.getElementById('projectSubtitle').textContent = project.subtitle || '';
   document.getElementById('deadlineLabel').textContent = formatDate(project.deadline);
 
-  const timeLeft = timeUntilDeadline();
-  document.getElementById('daysLeft').textContent = timeLeft !== null ? timeLeft : '—';
+  renderDeadlineCascade();
 
   const ov = overallProgress();
   document.getElementById('overallPct').textContent = ov.pct;
@@ -282,8 +330,68 @@ function render() {
   }
 
   renderPhases();
+  installTaskDnD();
   renderGantt();
   updateLastSaved();
+}
+
+function installTaskDnD() {
+  let dragging = null;
+
+  document.querySelectorAll('.task .drag-handle[draggable="true"]').forEach(handle => {
+    const taskEl = handle.closest('.task');
+    if (!taskEl) return;
+    handle.addEventListener('dragstart', (e) => {
+      dragging = {
+        phaseId: taskEl.dataset.phase,
+        ti: parseInt(taskEl.dataset.ti, 10),
+        el: taskEl,
+      };
+      taskEl.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', taskEl.dataset.phase + ':' + taskEl.dataset.ti); } catch (err) {}
+    });
+    handle.addEventListener('dragend', () => {
+      taskEl.classList.remove('dragging');
+      document.querySelectorAll('.task.drop-above, .task.drop-below')
+        .forEach(el => el.classList.remove('drop-above', 'drop-below'));
+      dragging = null;
+    });
+  });
+
+  document.querySelectorAll('.task').forEach(taskEl => {
+    taskEl.addEventListener('dragover', (e) => {
+      if (!dragging) return;
+      if (taskEl.dataset.phase !== dragging.phaseId) return;
+      if (taskEl === dragging.el) return;
+      e.preventDefault();
+      const rect = taskEl.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      taskEl.classList.toggle('drop-above', !after);
+      taskEl.classList.toggle('drop-below', after);
+    });
+    taskEl.addEventListener('dragleave', () => {
+      taskEl.classList.remove('drop-above', 'drop-below');
+    });
+    taskEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (!dragging) return;
+      if (taskEl.dataset.phase !== dragging.phaseId) return;
+      const phase = getPhase(dragging.phaseId);
+      if (!phase) return;
+      const fromIdx = dragging.ti;
+      const targetTi = parseInt(taskEl.dataset.ti, 10);
+      const rect = taskEl.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      const [item] = phase.tasks.splice(fromIdx, 1);
+      let insertAt = targetTi;
+      if (fromIdx < targetTi) insertAt = targetTi - 1;
+      if (after) insertAt += 1;
+      phase.tasks.splice(insertAt, 0, item);
+      saveLocal();
+      render();
+    });
+  });
 }
 
 function renderPhases() {
@@ -310,7 +418,8 @@ function renderPhases() {
           ? `<button class="task-deadline ${dlInfo.cls}" onclick="editTaskDeadline(event,'${phase.id}',${ti})" title="${dlInfo.title}">${dlInfo.label}</button>`
           : `<button class="task-deadline empty" onclick="editTaskDeadline(event,'${phase.id}',${ti})" title="Adicionar prazo">+ data</button>`;
         tasksHTML += `
-          <div class="task">
+          <div class="task" data-phase="${phase.id}" data-ti="${ti}">
+            <span class="drag-handle" draggable="true" aria-label="Arrastar tarefa" title="Arrastar para reordenar">⋮⋮</span>
             <input type="checkbox" class="task-cb" ${task.done ? 'checked' : ''}
               onchange="toggleTask('${phase.id}', ${ti})" aria-label="${escapeHtml(task.text)}">
             <span class="task-text${task.done ? ' done' : ''}" contenteditable="false"
@@ -741,6 +850,9 @@ window.syncFromRepo = syncFromRepo;
 window.resetToCanonical = resetToCanonical;
 
 init();
+
+// Atualiza a cascata de prazo a cada minuto (para os min/h ficarem vivos)
+setInterval(renderDeadlineCascade, 30000);
 
 // ── INTENSITY CONTROL ─────────────────────
 const INT_KEY = 'planning-repo:bg-intensity';
