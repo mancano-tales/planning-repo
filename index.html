@@ -72,6 +72,19 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="mini-player" id="miniPlayer">
+  <div class="mini-player-bar">
+    <div class="now-playing-dot"></div>
+    <div class="mini-player-name" id="playerTrackName">—</div>
+    <a class="mini-player-link" href="music.html">↗ música</a>
+    <button class="mini-player-close" onclick="closePlayer()" aria-label="Fechar">×</button>
+  </div>
+  <iframe id="playerIframe"
+    allow="autoplay; encrypted-media"
+    allowfullscreen
+    title="Player de música"></iframe>
+</div>
+
 <script>
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 const STORAGE_PREFIX = 'planning-repo:project:';
@@ -351,6 +364,33 @@ function qlEditKey(e, el, i) {
   if (e.key === 'Escape') { const d = qlLoad(); el.textContent = d.items[i]?.text || ''; el.blur(); }
 }
 qlRender();
+
+// ── MINI-PLAYER PERSISTENTE ───────────────
+const NP_KEY = 'planning-repo:nowplaying';
+
+function initPlayer() {
+  try {
+    const raw = localStorage.getItem(NP_KEY);
+    if (!raw) return;
+    const { id, list, name } = JSON.parse(raw);
+    if (!id) return;
+    document.getElementById('playerTrackName').textContent = name;
+    document.getElementById('playerIframe').src =
+      'https://www.youtube.com/embed/' + id + '?autoplay=1&list=' + list + '&rel=0&modestbranding=1';
+    document.getElementById('miniPlayer').classList.add('active');
+    document.querySelector('.container').style.paddingBottom = '18rem';
+  } catch(e) {}
+}
+
+function closePlayer() {
+  document.getElementById('miniPlayer').classList.remove('active');
+  setTimeout(() => { document.getElementById('playerIframe').src = ''; }, 340);
+  document.querySelector('.container').style.paddingBottom = '';
+  try { localStorage.removeItem(NP_KEY); } catch(e) {}
+}
+
+window.closePlayer = closePlayer;
+initPlayer();
 
 // ── MOUSE BLOOM ───────────────────────────
 document.addEventListener('mousemove', e => {
