@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Música de Trabalho — Planejamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,0..100&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+
+/* ── Forest Banner ────────────────────────────────── */
+
+.forest-banner {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 22% 0%,   rgba(72, 155, 28, 0.55) 0%, transparent 38%),
+    radial-gradient(circle at 75% 18%,  rgba(32,  90,  6, 0.80) 0%, transparent 46%),
+    radial-gradient(circle at 48% 65%,  rgba(16,  56,  3, 0.92) 0%, transparent 55%),
+    radial-gradient(circle at  8% 72%,  rgba(28,  88,  8, 0.72) 0%, transparent 35%),
+    radial-gradient(circle at 92% 78%,  rgba(44, 115, 12, 0.65) 0%, transparent 40%),
+    radial-gradient(circle at 55% 30%,  rgba(58, 130, 20, 0.40) 0%, transparent 30%),
+    #192E08;
+}
+
+/* Dappled golden light filtering through canopy */
+.forest-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 22% 55% at 68%  0%, rgba(212, 148, 52, 0.26) 0%, transparent 70%),
+    radial-gradient(ellipse 12% 40% at 82% 10%, rgba(255, 200, 80, 0.12) 0%, transparent 60%),
+    radial-gradient(circle           at 18% 35%, rgba(200, 140, 40, 0.08) 0%, transparent 30%);
+}
+
+/* Sun rays through canopy */
+.forest-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    at 67% -20%,
+    rgba(212, 148, 52, 0.09) 0deg 1.5deg,
+    transparent 1.5deg 8.5deg
+  );
+}
+
+/* CSS leaf shapes scattered around the banner */
+.leaf-field {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.lf {
+  position: absolute;
+  border-radius: 0 100%;
+}
+
+/* ── Forest content (text over dark green) ────────── */
+.forest-content {
+  position: relative;
+  z-index: 3;
+}
+
+.forest-content .masthead {
+  border-bottom-color: rgba(220, 210, 185, 0.18);
+}
+
+.forest-content .eyebrow,
+.forest-content .eyebrow a {
+  color: rgba(220, 210, 185, 0.55);
+}
+.forest-content .eyebrow a:hover { color: #B0D058; }
+
+.forest-content .title { color: #EDE5D0; }
+.forest-content .title em { color: #A8CE40; }
+
+.forest-content .subtitle { color: rgba(220, 210, 185, 0.68); }
+
+/* ── Music Grid & Cards ───────────────────────────── */
+
+.music-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .music-grid { grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+}
+
+.music-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s;
+}
+
+.music-card:hover { transform: translateY(-3px); }
+
+.music-thumb-wrap {
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--paper-deep);
+}
+
+.music-thumb {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.32s;
+}
+
+.music-card:hover .music-thumb { transform: scale(1.06); }
+
+.music-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.placeholder-icon {
+  font-family: var(--serif);
+  font-size: 2.25rem;
+  color: var(--ink-faint);
+  line-height: 1;
+}
+
+.placeholder-label {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--ink-mute);
+}
+
+.music-info {
+  padding: 0.7rem 0 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.music-cat-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 0.2rem;
+}
+
+.music-title {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 0.4rem;
+  font-variation-settings: "opsz" 14;
+}
+
+.music-play {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.music-card:hover .music-play { color: var(--accent-deep); }
+
+/* ── Forest section heading variant ──────────────── */
+.section-heading.forest-head {
+  margin-top: 2.5rem;
+  color: var(--done);
+  border-bottom-color: var(--done-tint);
+  letter-spacing: 0.25em;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     FOREST BANNER
+     ════════════════════════════════════════ -->
+<div class="forest-banner">
+
+  <!-- Scattered CSS leaf shapes -->
+  <div class="leaf-field">
+    <!-- Top row -->
+    <div class="lf" style="width:82px;height:134px;background:#2D6B15;top:-12px;left:2%;transform:rotate(32deg);opacity:0.62"></div>
+    <div class="lf" style="width:48px;height: 80px;background:#3E8426;top: 18px;left:11%;transform:rotate(-22deg);opacity:0.52"></div>
+    <div class="lf" style="width:72px;height:118px;background:#1B5311;top:-20px;left:19%;transform:rotate( 54deg);opacity:0.44"></div>
+    <div class="lf" style="width:38px;height: 62px;background:#4C8E2A;top:  6px;left:28%;transform:rotate(-42deg);opacity:0.58"></div>
+    <div class="lf" style="width:56px;height: 92px;background:#8A8835;top: -8px;left:36%;transform:rotate( 14deg);opacity:0.48"></div>
+    <div class="lf" style="width:94px;height:150px;background:#295F17;top:-32px;left:45%;transform:rotate(-10deg);opacity:0.54"></div>
+    <div class="lf" style="width:44px;height: 72px;background:#4C9E24;top: 22px;left:56%;transform:rotate( 66deg);opacity:0.44"></div>
+    <div class="lf" style="width:78px;height:125px;background:#347820;top:-18px;left:65%;transform:rotate(-58deg);opacity:0.58"></div>
+    <div class="lf" style="width:52px;height: 85px;background:#40821F;top: 12px;left:75%;transform:rotate( 28deg);opacity:0.52"></div>
+    <div class="lf" style="width:88px;height:142px;background:#1E5C10;top:-26px;left:85%;transform:rotate(-34deg);opacity:0.50"></div>
+    <div class="lf" style="width:40px;height: 65px;background:#61A82C;top: 30px;left:93%;transform:rotate( 48deg);opacity:0.42"></div>
+    <!-- Smaller accent leaves in gaps -->
+    <div class="lf" style="width:28px;height:46px;background:#6CAB30;top:40px;left: 7%;transform:rotate( 82deg);opacity:0.38"></div>
+    <div class="lf" style="width:34px;height:56px;background:#5B9C28;top:28px;left:33%;transform:rotate(-78deg);opacity:0.48"></div>
+    <div class="lf" style="width:30px;height:50px;background:#AABC42;top:38px;left:61%;transform:rotate( 72deg);opacity:0.36"></div>
+    <div class="lf" style="width:26px;height:44px;background:#509A22;top:44px;left:78%;transform:rotate(-68deg);opacity:0.44"></div>
+    <!-- Bottom row (hanging downward, rotated ~180°) -->
+    <div class="lf" style="width:62px;height:100px;background:#3B7E20;bottom:-10px;left: 5%;transform:rotate(-152deg);opacity:0.50"></div>
+    <div class="lf" style="width:44px;height: 72px;background:#2D6218;bottom:  4px;left:16%;transform:rotate( 162deg);opacity:0.44"></div>
+    <div class="lf" style="width:70px;height:114px;background:#4E922A;bottom:-14px;left:30%;transform:rotate(-138deg);opacity:0.50"></div>
+    <div class="lf" style="width:50px;height: 82px;background:#8A8835;bottom:  0px;left:50%;transform:rotate( 146deg);opacity:0.38"></div>
+    <div class="lf" style="width:66px;height:108px;background:#2B6016;bottom:-12px;left:66%;transform:rotate(-164deg);opacity:0.50"></div>
+    <div class="lf" style="width:42px;height: 68px;background:#408722;bottom:  6px;left:82%;transform:rotate( 134deg);opacity:0.54"></div>
+    <div class="lf" style="width:58px;height: 94px;background:#1E580E;bottom: -8px;left:91%;transform:rotate(-148deg);opacity:0.46"></div>
+  </div>
+
+  <div class="container forest-content">
+    <header class="masthead">
+      <div class="eyebrow">
+        <a href="index.html">← Planejamento</a> · Música de trabalho
+      </div>
+      <h1 class="title">Work <em>music</em></h1>
+      <p class="subtitle">Playlists para concentração, flow e foco profundo</p>
+    </header>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PLAYLISTS
+     ════════════════════════════════════════ -->
+<div class="container">
+
+  <!-- ── Clássicas ── -->
+  <h2 class="section-heading forest-head">Clássicas</h2>
+  <div class="music-grid">
+
+    <a href="https://www.youtube.com/watch?v=QjkaWADdU9w&list=RDQjkaWADdU9w&start_radio=1" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb" style="background-image:url('https://img.youtube.com/vi/QjkaWADdU9w/hqdefault.jpg')"></div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Clássica</div>
+        <div class="music-title">Mix I</div>
+        <div class="music-play">▶ Abrir playlist</div>
+      </div>
+    </a>
+
+    <a href="https://www.youtube.com/watch?v=ee38JG04j2E&list=RDee38JG04j2E&start_radio=1" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb" style="background-image:url('https://img.youtube.com/vi/ee38JG04j2E/hqdefault.jpg')"></div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Clássica</div>
+        <div class="music-title">Mix II</div>
+        <div class="music-play">▶ Abrir playlist</div>
+      </div>
+    </a>
+
+    <a href="https://www.youtube.com/watch?v=ACQ4l-Y4_hY&list=RDACQ4l-Y4_hY&start_radio=1" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb" style="background-image:url('https://img.youtube.com/vi/ACQ4l-Y4_hY/hqdefault.jpg')"></div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Clássica</div>
+        <div class="music-title">Mix III</div>
+        <div class="music-play">▶ Abrir playlist</div>
+      </div>
+    </a>
+
+    <a href="https://www.youtube.com/watch?v=Zuj6o19jJ2A&list=RDZuj6o19jJ2A&start_radio=1" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb" style="background-image:url('https://img.youtube.com/vi/Zuj6o19jJ2A/hqdefault.jpg')"></div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Clássica</div>
+        <div class="music-title">Mix IV</div>
+        <div class="music-play">▶ Abrir playlist</div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Café Cubano ── -->
+  <h2 class="section-heading forest-head">Café Cubano</h2>
+  <div class="music-grid">
+
+    <a href="https://www.youtube.com/watch?v=hLlHVdzwT90&list=RDhLlHVdzwT90&start_radio=1" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb" style="background-image:url('https://img.youtube.com/vi/hLlHVdzwT90/hqdefault.jpg')"></div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Café Cubano</div>
+        <div class="music-title">Latin Jazz &amp; Bossa</div>
+        <div class="music-play">▶ Abrir playlist</div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Techno DJ ── -->
+  <h2 class="section-heading forest-head">Techno · DJ Mix</h2>
+  <div class="music-grid">
+
+    <a href="https://www.youtube.com/watch?v=4ak0c1XdnEI&list=RD4ak0c1XdnEI&start_radio=1" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb" style="background-image:url('https://img.youtube.com/vi/4ak0c1XdnEI/hqdefault.jpg')"></div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Techno DJ</div>
+        <div class="music-title">DJ Mix</div>
+        <div class="music-play">▶ Abrir playlist</div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Techno de Concentração ── -->
+  <h2 class="section-heading forest-head">Techno de Concentração</h2>
+  <div class="music-grid">
+
+    <a href="https://www.youtube.com/results?search_query=techno+concentra%C3%A7%C3%A3o+deep+focus+mix" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb-placeholder">
+          <div class="placeholder-icon">♩</div>
+          <div class="placeholder-label">Buscar no YouTube</div>
+        </div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Techno</div>
+        <div class="music-title">Concentração Mix</div>
+        <div class="music-play">▶ Abrir busca</div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Sound Island ── -->
+  <h2 class="section-heading forest-head">Sound Island</h2>
+  <div class="music-grid">
+
+    <a href="https://www.youtube.com/results?search_query=sound+island+ambient" target="_blank" rel="noopener" class="music-card">
+      <div class="music-thumb-wrap">
+        <div class="music-thumb-placeholder">
+          <div class="placeholder-icon">♪</div>
+          <div class="placeholder-label">Buscar no YouTube</div>
+        </div>
+      </div>
+      <div class="music-info">
+        <div class="music-cat-tag">Sound Island</div>
+        <div class="music-title">Ambiente &amp; Nature</div>
+        <div class="music-play">▶ Abrir busca</div>
+      </div>
+    </a>
+
+  </div>
+
+  <footer class="footer">
+    <p class="footer-note">
+      Clique em qualquer card para abrir a playlist no YouTube em uma nova aba.
+      Para adicionar links específicos de Sound Island ou Techno de Concentração,
+      edite <code>music.html</code> e substitua o <code>href</code> do card.
+    </p>
+  </footer>
+
+</div><!-- /container -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+document.addEventListener('mousemove', e => {
+  document.documentElement.style.setProperty('--mx', (e.clientX / window.innerWidth * 100).toFixed(1) + '%');
+  document.documentElement.style.setProperty('--my', (e.clientY / window.innerHeight * 100).toFixed(1) + '%');
+});
+</script>
+
+</body>
+</html>
