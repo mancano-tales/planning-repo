@@ -76,6 +76,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="gantt-tooltip" id="ganttTooltip"></div>
 
 <script>
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -243,6 +244,7 @@ function renderPhases() {
 
     const phaseDiv = document.createElement('article');
     phaseDiv.className = 'phase' + (active ? ' active' : '') + (done ? ' done' : '');
+    phaseDiv.id = 'phase-' + phase.id;
 
     let tasksHTML = '';
     if (open) {
@@ -326,6 +328,8 @@ function renderGantt() {
 
   const rowsEl = document.getElementById('ganttRows');
   rowsEl.innerHTML = '';
+  const fillEls = [];
+
   project.phases.forEach(phase => {
     if (!phase.start || !phase.end) return;
     const s = new Date(phase.start);
@@ -335,11 +339,13 @@ function renderGantt() {
     const pr = phaseProgress(phase);
     const active = isActivePhase(phase);
     const done = isDonePhase(phase);
+    const past = !active && !done && today() > e;
 
-    let barClass = 'gantt-bar upcoming';
-    if (done) barClass = 'gantt-bar done';
-    else if (active) barClass = 'gantt-bar active';
-    else if (today() > e) barClass = 'gantt-bar';
+    let shellClass = 'gantt-bar-shell';
+    if (done) shellClass += ' done';
+    else if (active) shellClass += ' active';
+    else if (past) shellClass += ' past';
+    else shellClass += ' upcoming';
 
     const short = phase.name.replace('Capítulo ', 'Cap. ').split('—')[0].trim();
     const todayMarker = todayInRange ?
@@ -350,10 +356,24 @@ function renderGantt() {
     row.innerHTML = `
       <div class="gantt-label" title="${escapeHtml(phase.name)}">${escapeHtml(short)}</div>
       <div class="gantt-track">
-        <div class="${barClass}" style="left: ${left.toFixed(2)}%; width: ${width.toFixed(2)}%;"></div>
+        <div class="${shellClass}"
+          style="left: ${left.toFixed(2)}%; width: ${width.toFixed(2)}%;"
+          onclick="ganttGoToPhase('${phase.id}')"
+          onmouseenter="ganttTooltipShow(event, '${escapeHtml(phase.name).replace(/'/g, "\\'")}', '${phase.start}', '${phase.end}', ${pr.pct})"
+          onmousemove="ganttTooltipMove(event)"
+          onmouseleave="ganttTooltipHide()">
+          <div class="gantt-bar-fill" style="width: 0%"></div>
+        </div>
         ${todayMarker}
       </div>`;
     rowsEl.appendChild(row);
+    fillEls.push({ el: row.querySelector('.gantt-bar-fill'), pct: pr.pct });
+  });
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fillEls.forEach(({ el, pct }) => { el.style.width = pct + '%'; });
+    });
   });
 }
 
@@ -512,6 +532,42 @@ async function resetToCanonical() {
   }
 }
 
+function ganttGoToPhase(phaseId) {
+  if (!openPhases.has(phaseId)) {
+    openPhases.add(phaseId);
+    render();
+  }
+  setTimeout(() => {
+    const target = document.getElementById('phase-' + phaseId);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
+}
+
+function ganttTooltipShow(ev, name, start, end, pct) {
+  const tt = document.getElementById('ganttTooltip');
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  function fmt(s) {
+    const d = new Date(s);
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  tt.innerHTML = `<div class="gtt-name">${escapeHtml(name)}</div>
+    <div class="gtt-dates">${fmt(start)} → ${fmt(end)}</div>
+    <div class="gtt-pct">${pct}% concluído</div>`;
+  tt.style.left = (ev.clientX + 14) + 'px';
+  tt.style.top = (ev.clientY - 10) + 'px';
+  tt.classList.add('visible');
+}
+
+function ganttTooltipMove(ev) {
+  const tt = document.getElementById('ganttTooltip');
+  tt.style.left = (ev.clientX + 14) + 'px';
+  tt.style.top = (ev.clientY - 10) + 'px';
+}
+
+function ganttTooltipHide() {
+  document.getElementById('ganttTooltip').classList.remove('visible');
+}
+
 let toastTimer = null;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -522,6 +578,10 @@ function showToast(msg) {
 }
 
 // expose
+window.ganttGoToPhase = ganttGoToPhase;
+window.ganttTooltipShow = ganttTooltipShow;
+window.ganttTooltipMove = ganttTooltipMove;
+window.ganttTooltipHide = ganttTooltipHide;
 window.toggleOpen = toggleOpen;
 window.toggleTask = toggleTask;
 window.startEdit = startEdit;

@@ -32,23 +32,41 @@
 /* ── Fundo: mesma estrutura da home mas em verdes ── */
 body {
   background-image:
-    radial-gradient(circle at var(--mx, 50%) var(--my, 80%), rgba(74, 123, 34, 0.12) 0%, transparent 38%),
-    radial-gradient(ellipse 140% 55% at 50% 125%, rgba(45, 90, 16, 0.22) 0%, transparent 60%),
-    radial-gradient(circle at 90% 92%, rgba(38, 78, 12, 0.16) 0%, transparent 30%),
-    radial-gradient(circle at  8% 88%, rgba(74, 123, 34, 0.14) 0%, transparent 28%),
-    radial-gradient(ellipse 55% 35% at 105% 0%, rgba(100, 130, 30, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at  0% 48%, rgba(122, 123, 50, 0.10) 0%, transparent 22%);
+    radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
+      rgba(74, 123, 34, 0.13) 0%, rgba(74, 123, 34, 0.05) 35%, transparent 58%),
+    radial-gradient(ellipse 130% 80% at 50% 132%,
+      rgba(45, 90, 16, 0.30) 0%, rgba(45, 90, 16, 0.13) 38%,
+      rgba(45, 90, 16, 0.03) 62%, transparent 78%),
+    radial-gradient(ellipse 90% 65% at -15% 106%,
+      rgba(74, 123, 34, 0.22) 0%, rgba(74, 123, 34, 0.09) 45%, transparent 70%),
+    radial-gradient(ellipse 82% 62% at 115% 100%,
+      rgba(38, 78, 12, 0.20) 0%, rgba(38, 78, 12, 0.08) 48%, transparent 72%),
+    radial-gradient(ellipse 62% 50% at 108% -5%,
+      rgba(100, 130, 30, 0.14) 0%, rgba(100, 130, 30, 0.05) 52%, transparent 72%),
+    radial-gradient(ellipse 48% 70% at -8% 45%,
+      rgba(122, 123, 50, 0.12) 0%, rgba(122, 123, 50, 0.05) 52%, transparent 72%),
+    radial-gradient(ellipse 55% 38% at 68% 52%,
+      rgba(90, 140, 40, 0.07) 0%, transparent 65%);
 }
 
 @media (prefers-color-scheme: dark) {
   body {
     background-image:
-      radial-gradient(circle at var(--mx, 50%) var(--my, 80%), rgba(100, 160, 50, 0.07) 0%, transparent 38%),
-      radial-gradient(ellipse 140% 55% at 50% 125%, rgba(55, 100, 20, 0.14) 0%, transparent 60%),
-      radial-gradient(circle at 90% 92%, rgba(44, 88, 14, 0.10) 0%, transparent 30%),
-      radial-gradient(circle at  8% 88%, rgba(80, 130, 36, 0.09) 0%, transparent 28%),
-      radial-gradient(ellipse 55% 35% at 105% 0%, rgba(90, 120, 28, 0.09) 0%, transparent 50%),
-      radial-gradient(circle at  0% 48%, rgba(110, 115, 45, 0.07) 0%, transparent 22%);
+      radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
+        rgba(100, 160, 50, 0.08) 0%, rgba(100, 160, 50, 0.03) 35%, transparent 58%),
+      radial-gradient(ellipse 130% 80% at 50% 132%,
+        rgba(55, 100, 20, 0.18) 0%, rgba(55, 100, 20, 0.08) 38%,
+        rgba(55, 100, 20, 0.02) 62%, transparent 78%),
+      radial-gradient(ellipse 90% 65% at -15% 106%,
+        rgba(80, 130, 36, 0.14) 0%, rgba(80, 130, 36, 0.06) 45%, transparent 70%),
+      radial-gradient(ellipse 82% 62% at 115% 100%,
+        rgba(44, 88, 14, 0.12) 0%, rgba(44, 88, 14, 0.05) 48%, transparent 72%),
+      radial-gradient(ellipse 62% 50% at 108% -5%,
+        rgba(90, 120, 28, 0.10) 0%, rgba(90, 120, 28, 0.04) 52%, transparent 72%),
+      radial-gradient(ellipse 48% 70% at -8% 45%,
+        rgba(110, 115, 45, 0.09) 0%, rgba(110, 115, 45, 0.04) 52%, transparent 72%),
+      radial-gradient(ellipse 55% 38% at 68% 52%,
+        rgba(80, 140, 38, 0.05) 0%, transparent 65%);
   }
 }
 
