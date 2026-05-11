@@ -48,6 +48,17 @@
 
 <div id="projectList" class="loading">Carregando projetos…</div>
 
+<h2 class="section-heading">Lista rápida</h2>
+<div class="quicklist-panel">
+  <div id="quicklistItems"></div>
+  <div class="task-add">
+    <input type="text" class="task-add-input" id="quicklistInput"
+      placeholder="Nova nota ou tarefa rápida…" onkeydown="qlKey(event)">
+    <button class="task-add-btn" onclick="qlAdd()">Adicionar</button>
+  </div>
+  <p class="quicklist-note">Salvo neste navegador · não sincroniza entre dispositivos</p>
+</div>
+
 <footer class="footer">
   <p class="footer-note">
     Cada projeto vive como um <code>JSON</code> em <code>projects/</code>.
@@ -148,6 +159,13 @@ function daysUntil(dateStr) {
   return Math.max(0, Math.ceil((d - today()) / (1000 * 60 * 60 * 24)));
 }
 
+function timeUntilLabel(ms) {
+  if (ms <= 0) return '0d';
+  const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  return d + 'd ' + h + 'h';
+}
+
 function isProjectActive(project) {
   if (!project || !project.deadline) return false;
   const d = new Date(project.deadline);
@@ -246,7 +264,7 @@ async function render() {
 
   document.getElementById('activeCount').textContent = activeProjects;
   document.getElementById('nextDeadline').textContent = nearestDeadline
-    ? formatDeadline(nearestDeadline.toISOString()) + ' · ' + Math.ceil((nearestDeadline - today()) / (1000 * 60 * 60 * 24)) + 'd'
+    ? formatDeadline(nearestDeadline.toISOString()) + ' · ' + timeUntilLabel(nearestDeadline - today())
     : '—';
   document.getElementById('openTasks').textContent = totalTasks - totalDone;
   document.getElementById('openTasksMeta').textContent = (totalTasks - totalDone) + ' tarefas em aberto · ' + totalTasks + ' no total';
@@ -276,6 +294,69 @@ async function render() {
 }
 
 render();
+
+// ── QUICKLIST ──────────────────────────────
+const QL_KEY = 'planning-repo:quicklist';
+
+function qlLoad() {
+  try { return JSON.parse(localStorage.getItem(QL_KEY)) || { items: [] }; }
+  catch (e) { return { items: [] }; }
+}
+function qlSave(d) {
+  try { localStorage.setItem(QL_KEY, JSON.stringify(d)); } catch (e) {}
+}
+function qlRender() {
+  const { items } = qlLoad();
+  const el = document.getElementById('quicklistItems');
+  if (!el) return;
+  if (items.length === 0) {
+    el.innerHTML = '<div class="quicklist-empty">Vazio por enquanto — adicione uma nota acima.</div>';
+    return;
+  }
+  el.innerHTML = items.map((item, i) => `
+    <div class="task">
+      <input type="checkbox" class="task-cb" ${item.done ? 'checked' : ''}
+        onchange="qlToggle(${i})">
+      <span class="task-text${item.done ? ' done' : ''}" contenteditable="false"
+        ondblclick="qlStartEdit(this,${i})"
+        onblur="qlFinishEdit(this,${i})"
+        onkeydown="qlEditKey(event,this,${i})">${escapeHtml(item.text)}</span>
+      <button class="task-del" onclick="qlDel(${i})">×</button>
+    </div>`).join('');
+}
+function qlAdd() {
+  const inp = document.getElementById('quicklistInput');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  const d = qlLoad();
+  d.items.push({ text: txt, done: false });
+  qlSave(d); inp.value = ''; qlRender(); inp.focus();
+}
+function qlKey(e) { if (e.key === 'Enter') qlAdd(); }
+function qlToggle(i) {
+  const d = qlLoad(); d.items[i].done = !d.items[i].done; qlSave(d); qlRender();
+}
+function qlDel(i) {
+  const d = qlLoad(); d.items.splice(i, 1); qlSave(d); qlRender();
+}
+function qlStartEdit(el, i) { el.contentEditable = 'true'; el.focus(); }
+function qlFinishEdit(el, i) {
+  el.contentEditable = 'false';
+  const txt = el.textContent.trim();
+  if (!txt) { qlRender(); return; }
+  const d = qlLoad(); d.items[i].text = txt; qlSave(d);
+}
+function qlEditKey(e, el, i) {
+  if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+  if (e.key === 'Escape') { const d = qlLoad(); el.textContent = d.items[i]?.text || ''; el.blur(); }
+}
+qlRender();
+
+// ── MOUSE BLOOM ───────────────────────────
+document.addEventListener('mousemove', e => {
+  document.documentElement.style.setProperty('--mx', (e.clientX / window.innerWidth * 100).toFixed(1) + '%');
+  document.documentElement.style.setProperty('--my', (e.clientY / window.innerHeight * 100).toFixed(1) + '%');
+});
 </script>
 
 </body>

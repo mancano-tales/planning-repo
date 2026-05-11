@@ -26,7 +26,7 @@
       <div class="meta-value" id="deadlineLabel">—</div>
     </div>
     <div class="meta-block right">
-      <div class="meta-label">Dias restantes</div>
+      <div class="meta-label">Tempo restante</div>
       <div class="meta-value accent" id="daysLeft">—</div>
     </div>
   </div>
@@ -176,10 +176,13 @@ function isDonePhase(p) {
   return phaseProgress(p).pct === 100;
 }
 
-function daysUntilDeadline() {
+function timeUntilDeadline() {
   if (!project.deadline) return null;
-  const d = new Date(project.deadline);
-  return Math.max(0, Math.ceil((d - today()) / (1000 * 60 * 60 * 24)));
+  const ms = new Date(project.deadline) - today();
+  if (ms <= 0) return '0d';
+  const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  return d + 'd ' + h + 'h';
 }
 
 function formatDate(dateStr) {
@@ -203,8 +206,8 @@ function render() {
   document.getElementById('projectSubtitle').textContent = project.subtitle || '';
   document.getElementById('deadlineLabel').textContent = formatDate(project.deadline);
 
-  const days = daysUntilDeadline();
-  document.getElementById('daysLeft').textContent = days !== null ? days : '—';
+  const timeLeft = timeUntilDeadline();
+  document.getElementById('daysLeft').textContent = timeLeft !== null ? timeLeft : '—';
 
   const ov = overallProgress();
   document.getElementById('overallPct').textContent = ov.pct;
@@ -533,6 +536,11 @@ window.syncFromRepo = syncFromRepo;
 window.resetToCanonical = resetToCanonical;
 
 init();
+
+document.addEventListener('mousemove', e => {
+  document.documentElement.style.setProperty('--mx', (e.clientX / window.innerWidth * 100).toFixed(1) + '%');
+  document.documentElement.style.setProperty('--my', (e.clientY / window.innerHeight * 100).toFixed(1) + '%');
+});
 </script>
 
 </body>
