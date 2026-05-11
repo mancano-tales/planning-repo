@@ -67,23 +67,40 @@
 
 <div id="projectList" class="loading">Carregando projetos…</div>
 
-<h2 class="section-heading">Lista rápida</h2>
-<div class="quicklist-panel">
-  <div id="quicklistItems"></div>
-  <div class="task-add">
-    <input type="text" class="task-add-input" id="quicklistInput"
-      placeholder="Nova nota ou tarefa rápida…" onkeydown="qlKey(event)">
-    <button class="task-add-btn" onclick="qlAdd()">Adicionar</button>
+<!-- Lista rápida agora vive em um widget flutuante (canto inferior-direito, arrastável).
+     Injetado e estilizado por shared.js — mesmo padrão do Pomodoro. -->
+<div id="quicklistWidget" class="ql-widget">
+  <button type="button" class="ql-pill" id="qlPill" aria-label="Lista rápida">
+    <span class="ql-pill-icon">✎</span>
+    <span class="ql-pill-count" id="qlPillCount">0</span>
+    <span class="ql-pill-label">notas</span>
+  </button>
+  <div class="ql-panel" id="qlPanel" hidden>
+    <div class="ql-panel-head">
+      <div class="ql-panel-title">Lista rápida</div>
+      <div class="ql-panel-meta" id="qlPanelMeta">—</div>
+    </div>
+    <div id="quicklistItems" class="ql-items"></div>
+    <div class="task-add">
+      <input type="text" class="task-add-input" id="quicklistInput"
+        placeholder="Nova nota…" onkeydown="qlKey(event)">
+      <button class="task-add-btn" onclick="qlAdd()">+</button>
+    </div>
+    <p class="quicklist-note">Salvo neste navegador · não sincroniza entre dispositivos</p>
   </div>
-  <p class="quicklist-note">Salvo neste navegador · não sincroniza entre dispositivos</p>
 </div>
 
 <footer class="footer">
+  <div class="controls">
+    <button class="btn primary" onclick="exportManifest()">Exportar manifest.json</button>
+    <button class="btn" onclick="resetProjectOrder()">Restaurar ordem original</button>
+  </div>
   <p class="footer-note">
     Cada projeto vive como um <code>JSON</code> em <code>projects/</code>.
-    Para adicionar um novo, é só criar mais um arquivo lá e referenciá-lo em <code>manifest.json</code>.
-    O progresso fica salvo no navegador automaticamente; para sincronizar entre dispositivos,
-    use <code>Exportar progress.json</code> dentro de cada projeto.
+    A ordem que você definir aqui fica salva no navegador.
+    Para sincronizar entre dispositivos: exporte <code>manifest.json</code> e o
+    <code>progress.json</code> de cada projeto (dentro da página dele), e suba os
+    arquivos no repositório.
   </p>
 </footer>
 
@@ -482,6 +499,27 @@ function renderAgenda(metas, projects) {
 
 render();
 
+// ── EXPORT MANIFEST / RESET ORDER ─────────
+async function exportManifest() {
+  const manifest = await loadManifest();
+  manifest.projects = applyProjectOrder(manifest.projects);
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'manifest.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function resetProjectOrder() {
+  if (!confirm('Voltar para a ordem original do repositório?')) return;
+  try { localStorage.removeItem(PROJECT_ORDER_KEY); } catch (e) {}
+  render();
+}
+window.exportManifest = exportManifest;
+window.resetProjectOrder = resetProjectOrder;
+
 // ── QUICKLIST ──────────────────────────────
 const QL_KEY = 'planning-repo:quicklist';
 
@@ -495,9 +533,19 @@ function qlSave(d) {
 function qlRender() {
   const { items } = qlLoad();
   const el = document.getElementById('quicklistItems');
+  const count = document.getElementById('qlPillCount');
+  const meta = document.getElementById('qlPanelMeta');
+  if (count) {
+    const open = items.filter(it => !it.done).length;
+    count.textContent = open;
+  }
+  if (meta) {
+    const done = items.filter(it => it.done).length;
+    meta.textContent = items.length === 0 ? 'vazio' : (done + ' de ' + items.length + ' feitas');
+  }
   if (!el) return;
   if (items.length === 0) {
-    el.innerHTML = '<div class="quicklist-empty">Vazio por enquanto — adicione uma nota acima.</div>';
+    el.innerHTML = '<div class="quicklist-empty">Vazio — adicione uma nota.</div>';
     return;
   }
   el.innerHTML = items.map((item, i) => `
@@ -510,6 +558,85 @@ function qlRender() {
         onkeydown="qlEditKey(event,this,${i})">${escapeHtml(item.text)}</span>
       <button class="task-del" onclick="qlDel(${i})">×</button>
     </div>`).join('');
+}
+
+// ── QUICKLIST: toggle, drag, posição persistida ──
+const QL_POS_KEY = 'planning-repo:quicklist-pos';
+
+function installQuicklistWidget() {
+  const widget = document.getElementById('quicklistWidget');
+  const pill = document.getElementById('qlPill');
+  const panel = document.getElementById('qlPanel');
+  if (!widget || !pill || !panel) return;
+
+  // restaurar posição
+  try {
+    const raw = localStorage.getItem(QL_POS_KEY);
+    if (raw) {
+      const pos = JSON.parse(raw);
+      if (pos && typeof pos.top === 'number' && typeof pos.left === 'number') {
+        applyQlPosition(pos.top, pos.left);
+      }
+    }
+  } catch (e) {}
+
+  // toggle do panel via click (sem drag)
+  let dragState = null;
+  let moved = false;
+  pill.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== undefined && ev.button !== 0) return;
+    const rect = widget.getBoundingClientRect();
+    dragState = { startX: ev.clientX, startY: ev.clientY, origLeft: rect.left, origTop: rect.top };
+    moved = false;
+    widget.classList.add('dragging');
+    pill.setPointerCapture && pill.setPointerCapture(ev.pointerId);
+    ev.preventDefault();
+  });
+  pill.addEventListener('pointermove', (ev) => {
+    if (!dragState) return;
+    const dx = ev.clientX - dragState.startX;
+    const dy = ev.clientY - dragState.startY;
+    if (!moved && Math.hypot(dx, dy) > 4) moved = true;
+    applyQlPosition(dragState.origTop + dy, dragState.origLeft + dx);
+  });
+  function endDrag(ev) {
+    if (!dragState) return;
+    widget.classList.remove('dragging');
+    try { pill.releasePointerCapture && pill.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (moved) {
+      const rect = widget.getBoundingClientRect();
+      try { localStorage.setItem(QL_POS_KEY, JSON.stringify({ top: rect.top, left: rect.left })); } catch (e) {}
+      const swallow = (e) => { e.stopPropagation(); e.preventDefault(); pill.removeEventListener('click', swallow, true); };
+      pill.addEventListener('click', swallow, true);
+    }
+    dragState = null;
+  }
+  pill.addEventListener('pointerup', endDrag);
+  pill.addEventListener('pointercancel', endDrag);
+
+  pill.addEventListener('click', () => {
+    panel.hidden = !panel.hidden;
+  });
+
+  // fechar ao clicar fora
+  document.addEventListener('click', (ev) => {
+    if (!widget.contains(ev.target) && !panel.hidden) {
+      panel.hidden = true;
+    }
+  });
+}
+
+function applyQlPosition(top, left) {
+  const widget = document.getElementById('quicklistWidget');
+  if (!widget) return;
+  const w = widget.offsetWidth || 130;
+  const h = widget.offsetHeight || 40;
+  top = Math.max(4, Math.min(window.innerHeight - h - 4, top));
+  left = Math.max(4, Math.min(window.innerWidth - w - 4, left));
+  widget.style.top = top + 'px';
+  widget.style.left = left + 'px';
+  widget.style.bottom = 'auto';
+  widget.style.right = 'auto';
 }
 function qlAdd() {
   const inp = document.getElementById('quicklistInput');
@@ -538,6 +665,7 @@ function qlEditKey(e, el, i) {
   if (e.key === 'Escape') { const d = qlLoad(); el.textContent = d.items[i]?.text || ''; el.blur(); }
 }
 qlRender();
+installQuicklistWidget();
 
 // ── INTENSITY CONTROL ─────────────────────
 const INT_KEY = 'planning-repo:bg-intensity';

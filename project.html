@@ -29,10 +29,9 @@
     <div class="meta-block right">
       <div class="meta-label">Tempo restante</div>
       <div class="deadline-cascade" id="deadlineCascade">
-        <div class="dl-line dl-months" id="dlMonths">—</div>
-        <div class="dl-line dl-weeks" id="dlWeeks">—</div>
-        <div class="dl-line dl-days" id="dlDays">—</div>
-        <div class="dl-line dl-hours" id="dlHours">—</div>
+        <div class="dl-headline" id="dlHeadline">—</div>
+        <div class="dl-breakdown" id="dlBreakdown"></div>
+        <div class="dl-clock" id="dlClock">—</div>
       </div>
     </div>
   </div>
@@ -222,36 +221,47 @@ function timeUntilDeadline() {
   return d + 'd ' + h + 'h';
 }
 
-// Quebra ms em meses/semanas/dias/horas e minutos para a cascata visual.
+// Calcula o breakdown ADITIVO: meses + semanas + dias + h + min que SOMAM
+// até o tempo restante. Não é redundante — cada unidade é o "resto" da anterior.
 function deadlineBreakdown(ms) {
   if (ms <= 0) {
-    return {
-      overdue: true,
-      monthsLine: 'vencido',
-      weeksLine: '',
-      daysLine: '',
-      hoursLine: '',
-    };
+    return { overdue: true, totalDays: 0, parts: [], clock: 'vencido' };
   }
-  const totalDays = ms / 86400000;
-  const months = totalDays / 30.4375;   // média
-  const weeks = totalDays / 7;
-  const days = Math.floor(totalDays);
-  const hours = Math.floor((ms % 86400000) / 3600000);
-  const minutes = Math.floor((ms % 3600000) / 60000);
+  // Calcula meses inteiros via comparação de datas (mais preciso que 30.44)
+  const now = new Date();
+  const target = new Date(now.getTime() + ms);
+  let months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+  // Ajusta se ainda não passamos do dia-do-mês do alvo
+  const monthAnchor = new Date(now.getFullYear(), now.getMonth() + months, now.getDate(),
+                               now.getHours(), now.getMinutes(), now.getSeconds());
+  if (monthAnchor > target) {
+    months -= 1;
+  }
+  const afterMonths = new Date(now.getFullYear(), now.getMonth() + months, now.getDate(),
+                               now.getHours(), now.getMinutes(), now.getSeconds());
+  let remainingMs = target - afterMonths;
 
-  // Formata meses com até 1 casa decimal quando faz sentido
-  const monthsStr = months >= 10
-    ? Math.round(months) + ' meses'
-    : (Math.round(months * 10) / 10).toString().replace('.', ',') + (months === 1 ? ' mês' : ' meses');
+  const dayMs = 86400000;
+  const weekMs = 7 * dayMs;
+  const weeks = Math.floor(remainingMs / weekMs);
+  remainingMs -= weeks * weekMs;
 
-  return {
-    overdue: false,
-    monthsLine: monthsStr,
-    weeksLine: Math.round(weeks) + ' semanas',
-    daysLine: days + ' dias',
-    hoursLine: hours + 'h ' + (minutes < 10 ? '0' : '') + minutes + 'min',
-  };
+  const days = Math.floor(remainingMs / dayMs);
+  remainingMs -= days * dayMs;
+
+  const hours = Math.floor(remainingMs / 3600000);
+  remainingMs -= hours * 3600000;
+  const minutes = Math.floor(remainingMs / 60000);
+
+  const parts = [];
+  if (months > 0) parts.push({ n: months, u: months === 1 ? 'mês' : 'meses' });
+  if (weeks > 0)  parts.push({ n: weeks,  u: weeks === 1 ? 'sem' : 'sem' });
+  if (days > 0)   parts.push({ n: days,   u: days === 1 ? 'dia' : 'dias' });
+
+  const totalDays = Math.floor(ms / dayMs);
+  const clock = hours + 'h ' + (minutes < 10 ? '0' : '') + minutes + 'min';
+
+  return { overdue: false, totalDays, parts, clock };
 }
 
 function renderDeadlineCascade() {
@@ -260,10 +270,20 @@ function renderDeadlineCascade() {
   const ms = new Date(project.deadline + 'T23:59:59') - new Date();
   const bd = deadlineBreakdown(ms);
   cascade.classList.toggle('overdue', !!bd.overdue);
-  document.getElementById('dlMonths').textContent = bd.monthsLine;
-  document.getElementById('dlWeeks').textContent = bd.weeksLine;
-  document.getElementById('dlDays').textContent = bd.daysLine;
-  document.getElementById('dlHours').textContent = bd.hoursLine;
+  const headline = document.getElementById('dlHeadline');
+  const breakdown = document.getElementById('dlBreakdown');
+  const clock = document.getElementById('dlClock');
+  if (bd.overdue) {
+    headline.innerHTML = 'vencido';
+    breakdown.innerHTML = '';
+    clock.textContent = '';
+    return;
+  }
+  headline.innerHTML = bd.totalDays + '<span class="dl-headline-unit">dias</span>';
+  breakdown.innerHTML = bd.parts.length
+    ? bd.parts.map(p => `<span class="dl-num">${p.n}</span><span class="dl-unit"> ${p.u}</span>`).join(' <span class="dl-sep">·</span> ')
+    : '';
+  clock.textContent = bd.clock;
 }
 
 function formatDate(dateStr) {
