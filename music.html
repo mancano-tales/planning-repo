@@ -33,40 +33,40 @@
 body {
   background-image:
     radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
-      rgba(74, 123, 34, 0.13) 0%, rgba(74, 123, 34, 0.05) 35%, transparent 58%),
+      rgb(74 123 34 / calc(0.13 * var(--bg-a))) 0%, rgb(74 123 34 / calc(0.05 * var(--bg-a))) 35%, transparent 58%),
     radial-gradient(ellipse 130% 80% at 50% 132%,
-      rgba(45, 90, 16, 0.30) 0%, rgba(45, 90, 16, 0.13) 38%,
-      rgba(45, 90, 16, 0.03) 62%, transparent 78%),
+      rgb(45 90 16 / calc(0.30 * var(--bg-a))) 0%, rgb(45 90 16 / calc(0.13 * var(--bg-a))) 38%,
+      rgb(45 90 16 / calc(0.03 * var(--bg-a))) 62%, transparent 78%),
     radial-gradient(ellipse 90% 65% at -15% 106%,
-      rgba(74, 123, 34, 0.22) 0%, rgba(74, 123, 34, 0.09) 45%, transparent 70%),
+      rgb(74 123 34 / calc(0.22 * var(--bg-a))) 0%, rgb(74 123 34 / calc(0.09 * var(--bg-a))) 45%, transparent 70%),
     radial-gradient(ellipse 82% 62% at 115% 100%,
-      rgba(38, 78, 12, 0.20) 0%, rgba(38, 78, 12, 0.08) 48%, transparent 72%),
+      rgb(38 78 12 / calc(0.20 * var(--bg-a))) 0%, rgb(38 78 12 / calc(0.08 * var(--bg-a))) 48%, transparent 72%),
     radial-gradient(ellipse 62% 50% at 108% -5%,
-      rgba(100, 130, 30, 0.14) 0%, rgba(100, 130, 30, 0.05) 52%, transparent 72%),
+      rgb(100 130 30 / calc(0.14 * var(--bg-a))) 0%, rgb(100 130 30 / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
     radial-gradient(ellipse 48% 70% at -8% 45%,
-      rgba(122, 123, 50, 0.12) 0%, rgba(122, 123, 50, 0.05) 52%, transparent 72%),
+      rgb(122 123 50 / calc(0.12 * var(--bg-a))) 0%, rgb(122 123 50 / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
     radial-gradient(ellipse 55% 38% at 68% 52%,
-      rgba(90, 140, 40, 0.07) 0%, transparent 65%);
+      rgb(90 140 40 / calc(0.07 * var(--bg-a))) 0%, transparent 65%);
 }
 
 @media (prefers-color-scheme: dark) {
   body {
     background-image:
       radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
-        rgba(100, 160, 50, 0.08) 0%, rgba(100, 160, 50, 0.03) 35%, transparent 58%),
+        rgb(100 160 50 / calc(0.08 * var(--bg-a))) 0%, rgb(100 160 50 / calc(0.03 * var(--bg-a))) 35%, transparent 58%),
       radial-gradient(ellipse 130% 80% at 50% 132%,
-        rgba(55, 100, 20, 0.18) 0%, rgba(55, 100, 20, 0.08) 38%,
-        rgba(55, 100, 20, 0.02) 62%, transparent 78%),
+        rgb(55 100 20 / calc(0.18 * var(--bg-a))) 0%, rgb(55 100 20 / calc(0.08 * var(--bg-a))) 38%,
+        rgb(55 100 20 / calc(0.02 * var(--bg-a))) 62%, transparent 78%),
       radial-gradient(ellipse 90% 65% at -15% 106%,
-        rgba(80, 130, 36, 0.14) 0%, rgba(80, 130, 36, 0.06) 45%, transparent 70%),
+        rgb(80 130 36 / calc(0.14 * var(--bg-a))) 0%, rgb(80 130 36 / calc(0.06 * var(--bg-a))) 45%, transparent 70%),
       radial-gradient(ellipse 82% 62% at 115% 100%,
-        rgba(44, 88, 14, 0.12) 0%, rgba(44, 88, 14, 0.05) 48%, transparent 72%),
+        rgb(44 88 14 / calc(0.12 * var(--bg-a))) 0%, rgb(44 88 14 / calc(0.05 * var(--bg-a))) 48%, transparent 72%),
       radial-gradient(ellipse 62% 50% at 108% -5%,
-        rgba(90, 120, 28, 0.10) 0%, rgba(90, 120, 28, 0.04) 52%, transparent 72%),
+        rgb(90 120 28 / calc(0.10 * var(--bg-a))) 0%, rgb(90 120 28 / calc(0.04 * var(--bg-a))) 52%, transparent 72%),
       radial-gradient(ellipse 48% 70% at -8% 45%,
-        rgba(110, 115, 45, 0.09) 0%, rgba(110, 115, 45, 0.04) 52%, transparent 72%),
+        rgb(110 115 45 / calc(0.09 * var(--bg-a))) 0%, rgb(110 115 45 / calc(0.04 * var(--bg-a))) 52%, transparent 72%),
       radial-gradient(ellipse 55% 38% at 68% 52%,
-        rgba(80, 140, 38, 0.05) 0%, transparent 65%);
+        rgb(80 140 38 / calc(0.05 * var(--bg-a))) 0%, transparent 65%);
   }
 }
 
@@ -316,6 +316,13 @@ body {
 
 <div class="toast" id="toast"></div>
 
+<div class="intensity-ctrl" id="intensityCtrl">
+  <span class="intensity-icon">◐</span>
+  <input type="range" class="intensity-range" id="intensityRange"
+    min="30" max="300" value="150" step="10"
+    oninput="setIntensity(this.value)">
+</div>
+
 <script>
 
 const NP_KEY = 'planning-repo:nowplaying';
@@ -351,6 +358,21 @@ function closePlayer() {
 function openSearch(q) {
   window.open('https://www.youtube.com/results?search_query=' + q, '_blank', 'noopener');
 }
+
+// ── INTENSITY CONTROL ─────────────────────
+const INT_KEY = 'planning-repo:bg-intensity';
+function setIntensity(v) {
+  document.documentElement.style.setProperty('--bg-a', (v / 100).toFixed(2));
+  try { localStorage.setItem(INT_KEY, v); } catch(e) {}
+}
+window.setIntensity = setIntensity;
+try {
+  const sv = localStorage.getItem(INT_KEY);
+  if (sv) {
+    document.documentElement.style.setProperty('--bg-a', (sv / 100).toFixed(2));
+    document.getElementById('intensityRange').value = sv;
+  }
+} catch(e) {}
 
 document.addEventListener('mousemove', e => {
   document.documentElement.style.setProperty('--mx', (e.clientX / window.innerWidth * 100).toFixed(1) + '%');

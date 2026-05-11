@@ -23,6 +23,7 @@
   --serif: 'Fraunces', Georgia, serif;
   --sans: 'IBM Plex Sans', -apple-system, sans-serif;
   --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --bg-a: 1.5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -48,20 +49,20 @@
   body {
     background-image:
       radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
-        rgba(200, 95, 55, 0.10) 0%, rgba(200, 95, 55, 0.04) 35%, transparent 58%),
+        rgb(200 95 55 / calc(0.10 * var(--bg-a))) 0%, rgb(200 95 55 / calc(0.04 * var(--bg-a))) 35%, transparent 58%),
       radial-gradient(ellipse 130% 80% at 50% 132%,
-        rgba(192, 75, 40, 0.22) 0%, rgba(192, 75, 40, 0.09) 38%,
-        rgba(192, 75, 40, 0.02) 62%, transparent 78%),
+        rgb(192 75 40 / calc(0.22 * var(--bg-a))) 0%, rgb(192 75 40 / calc(0.09 * var(--bg-a))) 38%,
+        rgb(192 75 40 / calc(0.02 * var(--bg-a))) 62%, transparent 78%),
       radial-gradient(ellipse 90% 65% at -15% 106%,
-        rgba(208, 90, 40, 0.16) 0%, rgba(208, 90, 40, 0.06) 45%, transparent 70%),
+        rgb(208 90 40 / calc(0.16 * var(--bg-a))) 0%, rgb(208 90 40 / calc(0.06 * var(--bg-a))) 45%, transparent 70%),
       radial-gradient(ellipse 82% 62% at 115% 100%,
-        rgba(175, 65, 30, 0.14) 0%, rgba(175, 65, 30, 0.05) 48%, transparent 72%),
+        rgb(175 65 30 / calc(0.14 * var(--bg-a))) 0%, rgb(175 65 30 / calc(0.05 * var(--bg-a))) 48%, transparent 72%),
       radial-gradient(ellipse 62% 50% at 108% -5%,
-        rgba(180, 125, 45, 0.10) 0%, rgba(180, 125, 45, 0.04) 52%, transparent 72%),
+        rgb(180 125 45 / calc(0.10 * var(--bg-a))) 0%, rgb(180 125 45 / calc(0.04 * var(--bg-a))) 52%, transparent 72%),
       radial-gradient(ellipse 48% 70% at -8% 45%,
-        rgba(120, 110, 40, 0.09) 0%, rgba(120, 110, 40, 0.03) 52%, transparent 72%),
+        rgb(120 110 40 / calc(0.09 * var(--bg-a))) 0%, rgb(120 110 40 / calc(0.03 * var(--bg-a))) 52%, transparent 72%),
       radial-gradient(ellipse 55% 38% at 68% 52%,
-        rgba(180, 120, 45, 0.05) 0%, transparent 65%);
+        rgb(180 120 45 / calc(0.05 * var(--bg-a))) 0%, transparent 65%);
   }
 }
 
@@ -77,20 +78,20 @@ body {
   font-feature-settings: "kern", "liga", "ss01";
   background-image:
     radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
-      rgba(200, 95, 35, 0.13) 0%, rgba(200, 95, 35, 0.05) 35%, transparent 58%),
+      rgb(200 95 35 / calc(0.13 * var(--bg-a))) 0%, rgb(200 95 35 / calc(0.05 * var(--bg-a))) 35%, transparent 58%),
     radial-gradient(ellipse 130% 80% at 50% 132%,
-      rgba(174, 67, 30, 0.30) 0%, rgba(174, 67, 30, 0.13) 38%,
-      rgba(174, 67, 30, 0.03) 62%, transparent 78%),
+      rgb(174 67 30 / calc(0.30 * var(--bg-a))) 0%, rgb(174 67 30 / calc(0.13 * var(--bg-a))) 38%,
+      rgb(174 67 30 / calc(0.03 * var(--bg-a))) 62%, transparent 78%),
     radial-gradient(ellipse 90% 65% at -15% 106%,
-      rgba(208, 98, 36, 0.22) 0%, rgba(208, 98, 36, 0.09) 45%, transparent 70%),
+      rgb(208 98 36 / calc(0.22 * var(--bg-a))) 0%, rgb(208 98 36 / calc(0.09 * var(--bg-a))) 45%, transparent 70%),
     radial-gradient(ellipse 82% 62% at 115% 100%,
-      rgba(160, 55, 22, 0.20) 0%, rgba(160, 55, 22, 0.08) 48%, transparent 72%),
+      rgb(160 55 22 / calc(0.20 * var(--bg-a))) 0%, rgb(160 55 22 / calc(0.08 * var(--bg-a))) 48%, transparent 72%),
     radial-gradient(ellipse 62% 50% at 108% -5%,
-      rgba(210, 148, 58, 0.14) 0%, rgba(210, 148, 58, 0.05) 52%, transparent 72%),
+      rgb(210 148 58 / calc(0.14 * var(--bg-a))) 0%, rgb(210 148 58 / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
     radial-gradient(ellipse 48% 70% at -8% 45%,
-      rgba(130, 120, 48, 0.12) 0%, rgba(130, 120, 48, 0.05) 52%, transparent 72%),
+      rgb(130 120 48 / calc(0.12 * var(--bg-a))) 0%, rgb(130 120 48 / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
     radial-gradient(ellipse 55% 38% at 68% 52%,
-      rgba(210, 138, 52, 0.07) 0%, transparent 65%);
+      rgb(210 138 52 / calc(0.07 * var(--bg-a))) 0%, transparent 65%);
 }
 
 a { color: inherit; text-decoration: none; }
@@ -753,7 +754,7 @@ a { color: inherit; text-decoration: none; }
 .gantt-bar-shell {
   position: absolute;
   height: 100%;
-  background: var(--paper-deep);
+  background: var(--accent-tint);
   border-radius: 1px;
   overflow: hidden;
   cursor: pointer;
@@ -1067,4 +1068,59 @@ a { color: inherit; text-decoration: none; }
   width: 100%;
   height: 215px;
   border: none;
+}
+
+/* ============================================
+   INTENSITY CONTROL (regulador de cor)
+   ============================================ */
+
+.intensity-ctrl {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--paper-shade);
+  border: 1px solid var(--rule);
+  padding: 5px 10px;
+  border-radius: 2px;
+  z-index: 200;
+  opacity: 0.35;
+  transition: opacity 0.25s;
+}
+.intensity-ctrl:hover { opacity: 1; }
+
+.intensity-icon {
+  font-size: 13px;
+  color: var(--ink-mute);
+  line-height: 1;
+  user-select: none;
+}
+
+.intensity-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 72px;
+  height: 3px;
+  background: var(--rule);
+  border-radius: 1px;
+  outline: none;
+  cursor: pointer;
+}
+.intensity-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+.intensity-range::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
 }
