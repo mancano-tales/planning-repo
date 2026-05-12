@@ -30,7 +30,7 @@
 </section>
 
 <header class="masthead">
-  <div class="eyebrow">Gabinete de Trabalho · Tales Mancano · <a href="music.html">Música</a></div>
+  <div class="eyebrow">Gabinete de Trabalho · <a href="music.html">Música</a></div>
   <h1 class="title">Planejamento <em>em curso</em></h1>
   <p class="subtitle">Projetos, prazos e fluxos de trabalho em acompanhamento</p>
 
@@ -72,15 +72,19 @@
 
 <footer class="footer">
   <div class="controls">
-    <button class="btn primary" onclick="exportManifest()">Exportar manifest.json</button>
+    <button class="btn primary" onclick="newProjectDialog()">+ Novo projeto</button>
+    <button class="btn" onclick="exportManifest()">Exportar manifest.json</button>
+    <button class="btn" onclick="document.getElementById('manifestImport').click()">Importar manifest.json</button>
+    <button class="btn" onclick="document.getElementById('projectImport').click()">Importar projeto.json</button>
     <button class="btn" onclick="resetProjectOrder()">Restaurar ordem original</button>
+    <input type="file" id="manifestImport" accept=".json" style="display:none" onchange="importManifestFile(event)">
+    <input type="file" id="projectImport" accept=".json" multiple style="display:none" onchange="importProjectFile(event)">
   </div>
   <p class="footer-note">
-    Cada projeto vive como um <code>JSON</code> em <code>projects/</code>.
-    A ordem que você definir aqui fica salva no navegador.
-    Para sincronizar entre dispositivos: exporte <code>manifest.json</code> e o
-    <code>progress.json</code> de cada projeto (dentro da página dele), e suba os
-    arquivos no repositório.
+    Cada projeto vive como um <code>JSON</code> em <code>projects/</code>. A ordem
+    que você definir aqui fica salva no navegador. Para sincronizar entre dispositivos:
+    importe os arquivos editados (manifest e projetos) aqui, OU exporte daqui e do
+    botão dentro de cada projeto e suba os arquivos no repositório.
   </p>
 </footer>
 
@@ -89,10 +93,13 @@
 <div class="toast" id="toast"></div>
 
 <div class="intensity-ctrl" id="intensityCtrl">
-  <span class="intensity-icon">◐</span>
-  <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="600" value="150" step="10"
-    oninput="setIntensity(this.value)">
+  <div class="intensity-row">
+    <span class="intensity-icon">◐</span>
+    <input type="range" class="intensity-range" id="intensityRange"
+      min="30" max="1000" value="150" step="10"
+      oninput="setIntensity(this.value)">
+  </div>
+  <!-- .palette-ctrl é injetada aqui pelo shared.js -->
 </div>
 
 <div class="mini-player" id="miniPlayer">
@@ -115,6 +122,14 @@ const STORAGE_PREFIX = 'planning-repo:project:';
 function today() { return new Date(); }
 
 async function loadManifest() {
+  // Manifest importado pelo usuário tem prioridade sobre o JSON do repo
+  try {
+    const raw = localStorage.getItem('planning-repo:manifest-cache');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.projects)) return parsed;
+    }
+  } catch (e) {}
   try {
     const res = await fetch('projects/manifest.json?t=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -239,8 +254,21 @@ function projectCardHTML(meta, project, index) {
       <article class="project-card ${active ? 'active' : ''} ${done ? 'done' : ''}">
         <div class="project-roman">${ROMAN[index] || (index + 1)}</div>
         <div class="project-info">
-          <h3 class="project-name">${escapeHtml(meta.name)}</h3>
-          ${meta.subtitle ? `<p class="project-subtitle">${escapeHtml(meta.subtitle)}</p>` : ''}
+          <h3 class="project-name">
+            <span class="project-name-text editable" data-id="${escapeHtml(meta.id)}" data-field="name"
+                  title="Clique no lápis para editar"
+                  >${escapeHtml(meta.name)}</span>
+            <button type="button" class="project-name-edit" data-id="${escapeHtml(meta.id)}" data-field="name"
+                    aria-label="Editar nome do projeto">✎</button>
+          </h3>
+          ${meta.subtitle ? `<p class="project-subtitle">
+            <span class="project-subtitle-text editable" data-id="${escapeHtml(meta.id)}" data-field="subtitle">${escapeHtml(meta.subtitle)}</span>
+            <button type="button" class="project-name-edit" data-id="${escapeHtml(meta.id)}" data-field="subtitle"
+                    aria-label="Editar subtítulo">✎</button>
+          </p>` : `<p class="project-subtitle empty">
+            <button type="button" class="project-name-edit add" data-id="${escapeHtml(meta.id)}" data-field="subtitle"
+                    aria-label="Adicionar subtítulo">+ subtítulo</button>
+          </p>`}
           <div class="project-meta-row">
             <span><span class="dot ${statusDot}"></span>${statusLabel}</span>
             <span>Fase: ${escapeHtml(currentLabel)}</span>
@@ -361,7 +389,8 @@ async function render() {
     return;
   }
 
-  // Aplica ordem customizada salva (drag-and-drop do usuário)
+  // Aplica overrides de nome/subtítulo + ordem customizada salva
+  manifest.projects = applyManifestOverrides(manifest.projects);
   manifest.projects = applyProjectOrder(manifest.projects);
   const hasCustomOrder = !!loadProjectOrder();
 
@@ -418,7 +447,134 @@ async function render() {
   listEl.innerHTML = ranked.map((r, i) => projectCardHTML(r.meta, r.project, i)).join('');
 
   installProjectDnD();
+  installProjectInlineEdit();
   renderAgenda(manifest.projects, projects);
+}
+
+// ── EDIT inline de nome/subtítulo nos cards do dashboard ──
+function installProjectInlineEdit() {
+  document.querySelectorAll('.project-name-edit').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const id = btn.dataset.id;
+      const field = btn.dataset.field;
+      startProjectFieldEdit(id, field, btn);
+    });
+  });
+  // Permitir click direto no texto também — desativa a navegação
+  document.querySelectorAll('.project-name-text, .project-subtitle-text').forEach(span => {
+    span.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      startProjectFieldEditOnSpan(span);
+    });
+  });
+}
+
+async function startProjectFieldEdit(id, field, btn) {
+  const card = btn.closest('.project-card-link');
+  if (!card) return;
+  let span = card.querySelector(field === 'name' ? '.project-name-text' : '.project-subtitle-text');
+  if (!span) {
+    // Caso "+ subtítulo" — substitui o botão por um span editável
+    const p = btn.closest('.project-subtitle');
+    if (!p) return;
+    span = document.createElement('span');
+    span.className = 'project-subtitle-text editable';
+    span.dataset.id = id;
+    span.dataset.field = 'subtitle';
+    span.textContent = '';
+    p.innerHTML = '';
+    p.appendChild(span);
+    p.appendChild(btn);
+  }
+  startProjectFieldEditOnSpan(span);
+}
+
+function startProjectFieldEditOnSpan(span) {
+  const card = span.closest('.project-card-link');
+  if (card) card.classList.add('editing');   // desativa drag/nav durante edit
+  const id = span.dataset.id;
+  const field = span.dataset.field;
+  const original = span.textContent;
+  span.contentEditable = 'true';
+  span.focus();
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  let committed = false;
+  function finish(save) {
+    if (committed) return;
+    committed = true;
+    span.contentEditable = 'false';
+    span.removeEventListener('blur', onBlur);
+    span.removeEventListener('keydown', onKey);
+    if (card) card.classList.remove('editing');
+    const newVal = span.textContent.trim();
+    if (save) {
+      saveProjectField(id, field, newVal).then(() => {
+        // Re-render para refletir
+        render();
+      });
+    } else {
+      span.textContent = original;
+    }
+  }
+  function onBlur() { finish(true); }
+  function onKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { finish(false); }
+  }
+  span.addEventListener('blur', onBlur);
+  span.addEventListener('keydown', onKey);
+}
+
+// Persiste o name/subtitle no localStorage do projeto + no manifest overrides
+const MANIFEST_OVERRIDES_KEY = 'planning-repo:manifest-overrides';
+async function saveProjectField(id, field, value) {
+  // Atualiza o JSON do projeto no localStorage (afeta a página do projeto)
+  const projKey = STORAGE_PREFIX + id;
+  try {
+    const raw = localStorage.getItem(projKey);
+    let proj = raw ? JSON.parse(raw) : null;
+    if (!proj) {
+      const res = await fetch('projects/' + id + '.json?t=' + Date.now());
+      if (res.ok) proj = await res.json();
+    }
+    if (proj) {
+      if (field === 'name') proj.name = value || proj.name;
+      else if (field === 'subtitle') proj.subtitle = value;
+      proj.lastUpdated = new Date().toISOString();
+      localStorage.setItem(projKey, JSON.stringify(proj));
+    }
+  } catch (e) {}
+  // Override no manifest para que o card e dropdowns reflitam
+  try {
+    const raw = localStorage.getItem(MANIFEST_OVERRIDES_KEY);
+    const ov = raw ? JSON.parse(raw) : {};
+    if (!ov[id]) ov[id] = {};
+    if (field === 'name') ov[id].name = value || ov[id].name;
+    else if (field === 'subtitle') ov[id].subtitle = value;
+    localStorage.setItem(MANIFEST_OVERRIDES_KEY, JSON.stringify(ov));
+  } catch (e) {}
+}
+
+function applyManifestOverrides(manifestProjects) {
+  let ov = {};
+  try {
+    const raw = localStorage.getItem(MANIFEST_OVERRIDES_KEY);
+    if (raw) ov = JSON.parse(raw) || {};
+  } catch (e) {}
+  return manifestProjects.map(p => {
+    const o = ov[p.id];
+    if (!o) return p;
+    return { ...p, name: o.name !== undefined ? o.name : p.name,
+                  subtitle: o.subtitle !== undefined ? o.subtitle : p.subtitle };
+  });
 }
 
 function renderAgenda(metas, projects) {
@@ -478,6 +634,109 @@ function renderAgenda(metas, projects) {
 }
 
 render();
+
+// ── IMPORT manifest e projetos (sobrescreve localStorage) ──
+const MANIFEST_CACHE_KEY = 'planning-repo:manifest-cache';
+
+function importManifestFile(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.projects || !Array.isArray(data.projects)) {
+        throw new Error('formato inválido (esperado: { projects: [...] })');
+      }
+      localStorage.setItem(MANIFEST_CACHE_KEY, JSON.stringify(data));
+      // Limpa overrides e ordem porque o manifest agora é a fonte de verdade
+      try { localStorage.removeItem(MANIFEST_OVERRIDES_KEY); } catch (e) {}
+      try { localStorage.removeItem(PROJECT_ORDER_KEY); } catch (e) {}
+      render();
+      alert('manifest.json importado · ' + data.projects.length + ' projetos.');
+    } catch (err) {
+      alert('Arquivo inválido: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+function importProjectFile(ev) {
+  const files = Array.from(ev.target.files || []);
+  if (!files.length) return;
+  let loaded = 0, errors = [];
+  let pending = files.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.id || !Array.isArray(data.phases)) {
+          throw new Error('falta `id` ou `phases`');
+        }
+        localStorage.setItem(STORAGE_PREFIX + data.id, JSON.stringify(data));
+        loaded++;
+      } catch (err) {
+        errors.push(file.name + ': ' + err.message);
+      } finally {
+        pending--;
+        if (pending === 0) finalize();
+      }
+    };
+    reader.onerror = () => { errors.push(file.name); pending--; if (pending === 0) finalize(); };
+    reader.readAsText(file);
+  });
+  function finalize() {
+    render();
+    let msg = loaded + ' projeto(s) importado(s).';
+    if (errors.length) msg += '\nErros:\n' + errors.join('\n');
+    alert(msg);
+  }
+  ev.target.value = '';
+}
+
+// ── NEW PROJECT ─────────────────────────
+async function newProjectDialog() {
+  const name = (prompt('Nome do projeto') || '').trim();
+  if (!name) return;
+  // ID slug a partir do nome
+  const baseId = name.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'projeto';
+  // Garantir unicidade
+  const manifest = await loadManifest();
+  let id = baseId, n = 2;
+  while (manifest.projects.some(p => p.id === id)) {
+    id = baseId + '-' + n; n++;
+  }
+  const deadline = (prompt('Prazo final (YYYY-MM-DD)', '') || '').trim() || null;
+  const subtitle = (prompt('Subtítulo (opcional)', '') || '').trim();
+  const today = new Date().toISOString().slice(0, 10);
+  const newProj = {
+    id, name, subtitle: subtitle || undefined,
+    deadline: deadline || undefined,
+    lastUpdated: new Date().toISOString(),
+    phases: [{
+      id: 'fase-1',
+      name: 'Etapa I',
+      start: today,
+      end: deadline || today,
+      tasks: [],
+    }],
+  };
+  // Salva o projeto e o manifest no localStorage
+  localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(newProj));
+  manifest.projects.push({ id, name, subtitle: subtitle || undefined, deadline: deadline || undefined });
+  localStorage.setItem(MANIFEST_CACHE_KEY, JSON.stringify(manifest));
+  // Limpa override e ordem (o novo manifest cacheado é a fonte)
+  try { localStorage.removeItem(MANIFEST_OVERRIDES_KEY); } catch (e) {}
+  render();
+}
+
+window.newProjectDialog = newProjectDialog;
+window.importManifestFile = importManifestFile;
+window.importProjectFile = importProjectFile;
 
 // ── EXPORT MANIFEST / RESET ORDER ─────────
 async function exportManifest() {
@@ -555,6 +814,15 @@ function updateClock() {
   if (el) el.innerHTML = h + '<span class="sep">:</span>' + m;
 }
 
+const USER_NAME_KEY = 'planning-repo:user-name';
+function getUserName() {
+  try { return localStorage.getItem(USER_NAME_KEY) || 'Tales'; }
+  catch (e) { return 'Tales'; }
+}
+function setUserName(n) {
+  try { localStorage.setItem(USER_NAME_KEY, n); } catch (e) {}
+}
+
 function updateGreeting() {
   const h = new Date().getHours();
   let g;
@@ -563,7 +831,44 @@ function updateGreeting() {
   else if (h < 18) g = 'Boa tarde';
   else g = 'Boa noite';
   const el = document.getElementById('todayGreeting');
-  if (el) el.innerHTML = g + ', <em>Tales</em>';
+  if (!el) return;
+  const safeName = String(getUserName()).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+  el.innerHTML = g + ', <em class="editable" id="userName" title="Clique para editar seu nome">' + safeName + '</em>';
+  // Reata os handlers porque o innerHTML foi sobrescrito
+  const nameEl = document.getElementById('userName');
+  if (nameEl) {
+    nameEl.addEventListener('click', () => startUserNameEdit(nameEl));
+  }
+}
+
+function startUserNameEdit(el) {
+  if (el.isContentEditable) return;
+  el.contentEditable = 'true';
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  function finish(save) {
+    el.contentEditable = 'false';
+    el.removeEventListener('blur', onBlur);
+    el.removeEventListener('keydown', onKey);
+    const txt = el.textContent.trim();
+    if (save && txt) {
+      setUserName(txt);
+    }
+    updateGreeting();
+  }
+  function onBlur() { finish(true); }
+  function onKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { finish(false); }
+  }
+  el.addEventListener('blur', onBlur);
+  el.addEventListener('keydown', onKey);
 }
 
 function updateDate() {

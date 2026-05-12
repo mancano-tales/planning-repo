@@ -731,9 +731,10 @@
     }
   });
 
-  // ── ONDAS — animação calmante dos blobs de fundo ──
-  // Substitui o mousemove. Move --mx/--my em duas senoides com frequências
-  // diferentes, criando órbitas elípticas lentas e relaxantes.
+  // ── ONDAS — animação dos blobs de fundo (como ondas do mar) ──
+  // Cada eixo combina uma onda longa de grande amplitude (maré) com uma
+  // ondulação menor e mais rápida (vagalhão), produzindo movimento
+  // claramente visível mas ainda relaxante.
   function startWaveMotion() {
     const prefersReduced = window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -744,9 +745,13 @@
     }
     function tick(t) {
       const e = t / 1000;
-      // Períodos ~80s e ~120s para evitar ciclos óbvios
-      const mx = 50 + 28 * Math.sin(e * (2 * Math.PI / 80));
-      const my = 65 + 20 * Math.sin(e * (2 * Math.PI / 120) + 1.3);
+      // Maré (longa) + vagalhão (curto) → padrão não-repetitivo
+      const mx = 50
+              + 38 * Math.sin(e * (2 * Math.PI / 28))         // maré: 28s, ±38%
+              +  9 * Math.sin(e * (2 * Math.PI / 9) + 0.4);   // vagalhão: 9s, ±9%
+      const my = 55
+              + 32 * Math.sin(e * (2 * Math.PI / 44) + 1.3)   // maré: 44s, ±32%
+              +  7 * Math.sin(e * (2 * Math.PI / 13) + 0.9);  // vagalhão: 13s, ±7%
       document.documentElement.style.setProperty('--mx', mx.toFixed(2) + '%');
       document.documentElement.style.setProperty('--my', my.toFixed(2) + '%');
       requestAnimationFrame(tick);
@@ -755,12 +760,22 @@
   }
 
   // ── PALETTE SWITCHER ─────────────────────
+  // 12 paletas → grade 6×2 no painel
   const PALETTES = [
-    { id: '',         name: 'Terracota', swatch: '#D06224' },
-    { id: 'sage',     name: 'Sálvia',    swatch: '#7A8A50' },
-    { id: 'ocean',    name: 'Oceano',    swatch: '#4A7B95' },
-    { id: 'lavender', name: 'Lavanda',   swatch: '#8A75B0' },
-    { id: 'forest',   name: 'Floresta',  swatch: '#4A6E2A' },
+    // Linha 1: monocromáticas
+    { id: '',         name: 'Terracota',     swatch: '#D06224' },
+    { id: 'sage',     name: 'Sálvia',        swatch: '#7A8A50' },
+    { id: 'ocean',    name: 'Oceano',        swatch: '#4A7B95' },
+    { id: 'lavender', name: 'Lavanda',       swatch: '#8A75B0' },
+    { id: 'forest',   name: 'Floresta',      swatch: '#4A6E2A' },
+    { id: 'noite',    name: 'Noite (dark)',  swatch: 'linear-gradient(135deg, #1B1E2A 50%, #C4955A 50%)' },
+    // Linha 2: misturas de duas cores
+    { id: 'sunset',   name: 'Pôr do Sol',    swatch: 'linear-gradient(135deg, #C56F4A 50%, #A8758E 50%)' },
+    { id: 'seasand',  name: 'Areia & Mar',   swatch: 'linear-gradient(135deg, #C0AC78 50%, #4A8C8C 50%)' },
+    { id: 'grove',    name: 'Bosque',        swatch: 'linear-gradient(135deg, #6F8050 50%, #8F85A5 50%)' },
+    { id: 'autumn',   name: 'Outono',        swatch: 'linear-gradient(135deg, #C26830 50%, #806B30 50%)' },
+    { id: 'brisa',    name: 'Brisa',         swatch: 'linear-gradient(135deg, #5E978B 50%, #C19A76 50%)' },
+    { id: 'brasa',    name: 'Brasa',         swatch: 'linear-gradient(135deg, #B44A1E 50%, #2F2C28 50%)' },
   ];
   const PALETTE_KEY = 'planning-repo:palette';
 
@@ -788,7 +803,7 @@
         title="${p.name}" style="background: ${p.swatch};"
         aria-label="Paleta ${p.name}"></button>`
     ).join('');
-    intensity.parentNode.insertBefore(el, intensity);
+    intensity.appendChild(el);   // ← agora vai DENTRO do painel combinado
 
     el.querySelectorAll('.palette-opt').forEach(btn => {
       btn.addEventListener('click', () => applyPalette(btn.dataset.palette || ''));

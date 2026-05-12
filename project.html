@@ -18,13 +18,23 @@
   <div class="eyebrow">
     <a href="index.html">← Planejamento</a> · <span id="projectIdLabel">—</span>
   </div>
-  <h1 class="title" id="projectTitle">Carregando…</h1>
-  <p class="subtitle" id="projectSubtitle"></p>
+  <h1 class="title editable" id="projectTitle"
+      title="Clique para editar o nome do projeto"
+      onclick="startTitleEdit()"
+      onblur="finishTitleEdit()"
+      onkeydown="titleKey(event)">Carregando…</h1>
+  <p class="subtitle editable" id="projectSubtitle"
+      title="Clique para editar o subtítulo"
+      onclick="startSubtitleEdit()"
+      onblur="finishSubtitleEdit()"
+      onkeydown="subtitleKey(event)"></p>
 
   <div class="meta-row">
     <div class="meta-block">
       <div class="meta-label">Prazo</div>
-      <div class="meta-value" id="deadlineLabel">—</div>
+      <div class="meta-value editable" id="deadlineLabel"
+          title="Clique para alterar o prazo"
+          onclick="startDeadlineEdit(event)">—</div>
     </div>
     <div class="meta-block right">
       <div class="meta-label">Tempo restante</div>
@@ -93,10 +103,12 @@
 <div class="gantt-tooltip" id="ganttTooltip"></div>
 
 <div class="intensity-ctrl" id="intensityCtrl">
-  <span class="intensity-icon">◐</span>
-  <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="600" value="150" step="10"
-    oninput="setIntensity(this.value)">
+  <div class="intensity-row">
+    <span class="intensity-icon">◐</span>
+    <input type="range" class="intensity-range" id="intensityRange"
+      min="30" max="1000" value="150" step="10"
+      oninput="setIntensity(this.value)">
+  </div>
 </div>
 
 <div class="mini-player" id="miniPlayer">
@@ -675,6 +687,105 @@ function delTask(phaseId, ti) {
   showToast('Tarefa removida');
 }
 
+// ── Editar nome do projeto in-place ─────
+function startTitleEdit() {
+  const el = document.getElementById('projectTitle');
+  if (el.isContentEditable) return;
+  el.contentEditable = 'true';
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function finishTitleEdit() {
+  const el = document.getElementById('projectTitle');
+  if (!el.isContentEditable) return;
+  el.contentEditable = 'false';
+  const txt = el.textContent.trim();
+  if (!txt) { el.textContent = project.name || PROJECT_ID; return; }
+  if (txt !== project.name) {
+    project.name = txt;
+    saveLocal();
+    document.title = txt + ' — Planejamento';
+    showToast('Nome atualizado · exporte o progress.json para sincronizar');
+  }
+}
+
+function titleKey(e) {
+  if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+  if (e.key === 'Escape') {
+    e.currentTarget.textContent = project.name || PROJECT_ID;
+    e.currentTarget.blur();
+  }
+}
+
+function startSubtitleEdit() {
+  const el = document.getElementById('projectSubtitle');
+  if (el.isContentEditable) return;
+  el.contentEditable = 'true';
+  el.focus();
+}
+
+function finishSubtitleEdit() {
+  const el = document.getElementById('projectSubtitle');
+  if (!el.isContentEditable) return;
+  el.contentEditable = 'false';
+  const txt = el.textContent.trim();
+  if (txt !== (project.subtitle || '')) {
+    project.subtitle = txt;
+    saveLocal();
+    showToast('Subtítulo atualizado');
+  }
+}
+
+function subtitleKey(e) {
+  if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+  if (e.key === 'Escape') {
+    e.currentTarget.textContent = project.subtitle || '';
+    e.currentTarget.blur();
+  }
+}
+
+// ── Editar prazo do projeto in-place ─────
+function startDeadlineEdit(ev) {
+  ev.stopPropagation();
+  const el = document.getElementById('deadlineLabel');
+  // Evita duplo-trigger se já tem input
+  if (el.querySelector('input')) return;
+  const original = project.deadline || '';
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'deadline-edit-input';
+  inp.value = original;
+  el.textContent = '';
+  el.appendChild(inp);
+  inp.focus();
+  if (inp.showPicker) try { inp.showPicker(); } catch (e) {}
+
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    const v = inp.value || null;
+    if (v !== original) {
+      project.deadline = v || project.deadline;
+      saveLocal();
+      showToast('Prazo atualizado · exporte o progress.json para sincronizar');
+    }
+    render();
+  };
+  inp.addEventListener('change', commit);
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { committed = true; render(); }
+  });
+}
+
 function editTaskDeadline(ev, phaseId, ti) {
   ev.stopPropagation();
   const phase = getPhase(phaseId);
@@ -863,6 +974,13 @@ window.editKey = editKey;
 window.delTask = delTask;
 window.addTask = addTask;
 window.editTaskDeadline = editTaskDeadline;
+window.startTitleEdit = startTitleEdit;
+window.finishTitleEdit = finishTitleEdit;
+window.titleKey = titleKey;
+window.startSubtitleEdit = startSubtitleEdit;
+window.finishSubtitleEdit = finishSubtitleEdit;
+window.subtitleKey = subtitleKey;
+window.startDeadlineEdit = startDeadlineEdit;
 window.addKey = addKey;
 window.exportJSON = exportJSON;
 window.importJSON = importJSON;

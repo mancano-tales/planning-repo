@@ -114,6 +114,152 @@
   --pal-c7: 100 130 80;
 }
 
+/* Pôr do Sol — terracota + lavanda dusty (sunset glow) */
+:root.palette-sunset {
+  --paper: #F3EDE5;
+  --paper-shade: #E9E2D6;
+  --paper-deep: #DBD0C0;
+  --accent: #C56F4A;
+  --accent-deep: #964828;
+  --accent-soft: #DC9A78;
+  --accent-tint: #F3DBC8;
+  --done: #A8758E;
+  --done-tint: #ECDAE2;
+  --pal-c1: 220 130 95;
+  --pal-c2: 195 95 75;
+  --pal-c3: 200 120 145;
+  --pal-c4: 165 95 110;
+  --pal-c5: 230 175 120;
+  --pal-c6: 180 130 145;
+  --pal-c7: 215 140 110;
+}
+
+/* Areia & Mar — bege quente + teal/seafoam */
+:root.palette-seasand {
+  --paper: #F0EEE5;
+  --paper-shade: #E5E2D2;
+  --paper-deep: #D4D0BE;
+  --accent: #4A8C8C;
+  --accent-deep: #2D6868;
+  --accent-soft: #75AFAF;
+  --accent-tint: #D2E4E4;
+  --done: #B89B5F;
+  --done-tint: #EFE6CC;
+  --pal-c1: 100 145 145;
+  --pal-c2: 75 115 120;
+  --pal-c3: 175 165 130;
+  --pal-c4: 60 95 100;
+  --pal-c5: 200 185 145;
+  --pal-c6: 110 130 130;
+  --pal-c7: 145 165 145;
+}
+
+/* Bosque — sálvia + lavanda (forest spa) */
+:root.palette-grove {
+  --paper: #EFEEE5;
+  --paper-shade: #E4E2D4;
+  --paper-deep: #D2D0C0;
+  --accent: #6F8050;
+  --accent-deep: #4F6035;
+  --accent-soft: #92A475;
+  --accent-tint: #DCE3CC;
+  --done: #8F85A5;
+  --done-tint: #E0DCEA;
+  --pal-c1: 130 145 110;
+  --pal-c2: 100 115 80;
+  --pal-c3: 165 155 175;
+  --pal-c4: 80 95 60;
+  --pal-c5: 175 165 135;
+  --pal-c6: 130 125 155;
+  --pal-c7: 145 155 130;
+}
+
+/* Outono — terracota + oliva (mistura) */
+:root.palette-autumn {
+  --paper: #F3EFE3;
+  --paper-shade: #E8E3D1;
+  --paper-deep: #D7CFBA;
+  --accent: #C26830;
+  --accent-deep: #8E4A1E;
+  --accent-soft: #DC8E58;
+  --accent-tint: #F0DDC4;
+  --done: #806B30;
+  --done-tint: #E2D9B6;
+  --pal-c1: 200 95 35;
+  --pal-c2: 150 110 50;
+  --pal-c3: 210 120 60;
+  --pal-c4: 130 90 40;
+  --pal-c5: 195 165 80;
+  --pal-c6: 100 100 50;
+  --pal-c7: 180 135 70;
+}
+
+/* Brisa — mint suave + cream (ar fresco) */
+:root.palette-brisa {
+  --paper: #EFF1EB;
+  --paper-shade: #E4E8DD;
+  --paper-deep: #D2D7CA;
+  --accent: #5E978B;
+  --accent-deep: #3F786C;
+  --accent-soft: #8AB8AD;
+  --accent-tint: #D7E5DF;
+  --done: #C19A76;
+  --done-tint: #ECDDC9;
+  --pal-c1: 130 175 165;
+  --pal-c2: 95 140 130;
+  --pal-c3: 175 200 175;
+  --pal-c4: 70 110 100;
+  --pal-c5: 200 200 165;
+  --pal-c6: 130 150 145;
+  --pal-c7: 160 195 180;
+}
+
+/* Brasa — terracota intenso + carvão (vivid + dark contrast) */
+:root.palette-brasa {
+  --paper: #F2EBE3;
+  --paper-shade: #E5DCCE;
+  --paper-deep: #D2C8B5;
+  --accent: #B44A1E;
+  --accent-deep: #832F10;
+  --accent-soft: #D27A52;
+  --accent-tint: #F1D5C0;
+  --done: #4A4A45;
+  --done-tint: #D6D5D0;
+  --pal-c1: 200 80 30;
+  --pal-c2: 165 50 18;
+  --pal-c3: 90 80 75;
+  --pal-c4: 130 35 10;
+  --pal-c5: 215 130 70;
+  --pal-c6: 60 55 50;
+  --pal-c7: 175 95 50;
+}
+
+/* Noite — paleta escura (dark) */
+:root.palette-noite {
+  --paper: #1B1E2A;
+  --paper-shade: #252836;
+  --paper-deep: #2F3344;
+  --ink: #E2DDCB;
+  --ink-soft: #C0B9A4;
+  --ink-mute: #8B8576;
+  --ink-faint: #5A554A;
+  --accent: #C4955A;
+  --accent-deep: #9A6F38;
+  --accent-soft: #DCB07A;
+  --accent-tint: #3A2E1C;
+  --done: #8AA2B5;
+  --done-tint: #283440;
+  --rule: rgba(226, 221, 203, 0.22);
+  --rule-soft: rgba(226, 221, 203, 0.10);
+  --pal-c1: 196 149 90;
+  --pal-c2: 154 111 56;
+  --pal-c3: 138 162 181;
+  --pal-c4: 100 75 50;
+  --pal-c5: 175 145 100;
+  --pal-c6: 100 120 145;
+  --pal-c7: 145 115 90;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --paper: #1B1814;
@@ -257,7 +403,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.15em;
-  text-transform: uppercase;
   color: var(--ink-mute);
 }
 
@@ -270,6 +415,62 @@ a { color: inherit; text-decoration: none; }
 }
 
 .meta-value.accent { color: var(--accent); }
+
+/* Campos editáveis (título de projeto, subtítulo, prazo, nome de usuário…) */
+.editable {
+  cursor: text;
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin: 0 -4px;
+  transition: background 0.15s, outline-color 0.15s, box-shadow 0.15s;
+  outline: 1px solid transparent;
+  outline-offset: 1px;
+  position: relative;
+}
+
+.editable::after {
+  content: '✎';
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 0.55em;
+  color: var(--accent);
+  opacity: 0;
+  margin-left: 6px;
+  vertical-align: middle;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.editable:hover {
+  background: var(--paper-shade);
+  box-shadow: 0 0 0 1px var(--rule-soft);
+}
+
+.editable:hover::after { opacity: 0.65; }
+
+.editable[contenteditable="true"] {
+  background: var(--paper-shade);
+  outline-color: var(--accent);
+  cursor: text;
+}
+
+.editable[contenteditable="true"]::after { opacity: 0; }
+
+#projectTitle.editable { cursor: text; }
+#deadlineLabel.editable { cursor: pointer; }
+
+.deadline-edit-input {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-variation-settings: "opsz" 36;
+  padding: 2px 6px;
+  border: 1px solid var(--accent);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 2px;
+  outline: none;
+  font-feature-settings: "tnum";
+}
 
 /* Prazo: número grande de dias + breakdown aditivo terso */
 .deadline-cascade {
@@ -342,7 +543,6 @@ a { color: inherit; text-decoration: none; }
 .section-heading {
   font-family: var(--serif);
   font-size: 0.875rem;
-  text-transform: uppercase;
   letter-spacing: 0.3em;
   color: var(--ink-mute);
   margin: 3rem 0 1.5rem;
@@ -378,7 +578,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: var(--ink-mute);
   margin-bottom: 0.5rem;
 }
@@ -558,6 +757,54 @@ a { color: inherit; text-decoration: none; }
   font-style: italic;
   font-family: var(--serif);
 }
+
+.project-subtitle.empty { margin-top: 0.15rem; }
+
+/* Botão ✎ inline ao lado do nome/subtítulo nos cards do dashboard */
+.project-name-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  padding: 0 4px;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  vertical-align: middle;
+  line-height: 1;
+}
+.project-name-edit.add {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  text-transform: lowercase;
+  padding: 1px 6px;
+  border: 1px dashed var(--rule);
+  border-radius: 2px;
+}
+
+.project-card:hover .project-name-edit { opacity: 0.8; }
+.project-name-edit:hover { color: var(--accent); opacity: 1; }
+
+.project-name-text[contenteditable="true"],
+.project-subtitle-text[contenteditable="true"] {
+  background: var(--paper-shade);
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+  cursor: text;
+  display: inline-block;
+  min-width: 100px;
+}
+
+/* Durante edit, o anchor não navega */
+.project-card-link.editing { pointer-events: none; }
+.project-card-link.editing .project-name-text,
+.project-card-link.editing .project-subtitle-text,
+.project-card-link.editing .project-name-edit { pointer-events: auto; }
 
 .project-meta-row {
   display: flex;
@@ -937,7 +1184,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   padding: 7px 14px;
   background: var(--ink);
   color: var(--paper);
@@ -964,7 +1210,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: var(--ink-mute);
   margin-bottom: 1rem;
 }
@@ -1112,7 +1357,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   padding: 9px 16px;
   background: transparent;
   color: var(--ink-soft);
@@ -1217,7 +1461,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.15em;
-  text-transform: uppercase;
   color: var(--ink-faint);
 }
 
@@ -1276,7 +1519,6 @@ a { color: inherit; text-decoration: none; }
   font-size: 9px;
   color: var(--ink-faint);
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   margin-top: 2px;
 }
 
@@ -1299,7 +1541,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--ink-mute);
   margin-top: 3px;
 }
@@ -1385,7 +1626,6 @@ a { color: inherit; text-decoration: none; }
   color: var(--ink-mute);
   font-size: 9px;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
 }
 
 .ql-panel[hidden] { display: none !important; }
@@ -1425,7 +1665,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--ink-mute);
 }
 
@@ -1529,7 +1768,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--accent-soft);
   text-decoration: none;
   flex-shrink: 0;
@@ -1561,7 +1799,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================
-   INTENSITY CONTROL (regulador de cor)
+   INTENSITY + PALETTE — painel combinado top-right
    ============================================ */
 
 .intensity-ctrl {
@@ -1569,17 +1807,24 @@ a { color: inherit; text-decoration: none; }
   top: 0.75rem;
   right: 0.75rem;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 6px;
   background: var(--paper-shade);
   border: 1px solid var(--rule);
-  padding: 5px 10px;
+  padding: 7px 10px;
   border-radius: 2px;
   z-index: 200;
-  opacity: 0.35;
+  opacity: 0.4;
   transition: opacity 0.25s;
+  width: 168px;
 }
 .intensity-ctrl:hover { opacity: 1; }
+
+.intensity-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 .intensity-icon {
   font-size: 13px;
@@ -1591,7 +1836,7 @@ a { color: inherit; text-decoration: none; }
 .intensity-range {
   -webkit-appearance: none;
   appearance: none;
-  width: 72px;
+  flex: 1;
   height: 3px;
   background: var(--rule);
   border-radius: 1px;
@@ -1619,27 +1864,23 @@ a { color: inherit; text-decoration: none; }
    PALETTE SELECTOR (ao lado do regulador ◐)
    ============================================ */
 
+/* Paleta agora vive DENTRO de .intensity-ctrl como grid 6×2. */
 .palette-ctrl {
-  position: fixed;
-  top: 0.75rem;
-  right: calc(0.75rem + 110px);   /* logo à esquerda do intensity-ctrl */
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--paper-shade);
-  border: 1px solid var(--rule);
-  padding: 4px 7px;
-  border-radius: 2px;
-  z-index: 200;
-  opacity: 0.35;
-  transition: opacity 0.25s;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px 6px;
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--rule-soft);
 }
 
-.palette-ctrl:hover { opacity: 1; }
-
 .palette-opt {
-  width: 14px;
-  height: 14px;
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  min-width: 14px;
+  max-width: 22px;
+  justify-self: center;
   border-radius: 50%;
   border: 1.5px solid transparent;
   cursor: pointer;
@@ -1648,11 +1889,11 @@ a { color: inherit; text-decoration: none; }
   transition: transform 0.15s, border-color 0.15s;
 }
 
-.palette-opt:hover { transform: scale(1.18); }
+.palette-opt:hover { transform: scale(1.22); }
 
 .palette-opt.active {
   border-color: var(--ink);
-  transform: scale(1.12);
+  transform: scale(1.15);
 }
 
 /* ============================================
@@ -1690,7 +1931,6 @@ a { color: inherit; text-decoration: none; }
 .today-time .sep {
   color: var(--accent);
   opacity: 0.55;
-  font-style: italic;
   animation: today-blink 2.4s ease-in-out infinite;
 }
 
@@ -1724,7 +1964,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: var(--ink-mute);
 }
 
@@ -1741,7 +1980,6 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: var(--ink-mute);
   white-space: nowrap;
 }
@@ -1970,7 +2208,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--ink-mute);
 }
 
@@ -2016,7 +2253,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
   padding: 7px 8px;
   background: transparent;
   color: var(--ink-soft);
@@ -2057,7 +2293,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.15em;
-  text-transform: uppercase;
   color: var(--ink-mute);
   flex-shrink: 0;
 }
@@ -2102,7 +2337,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.16em;
-  text-transform: uppercase;
   color: var(--ink-mute);
 }
 
@@ -2252,7 +2486,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   color: var(--ink-mute);
   cursor: pointer;
   outline: none;
@@ -2296,7 +2529,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
 }
 
 .pomo-set-label {
-  text-transform: uppercase;
   font-size: 9px;
   letter-spacing: 0.15em;
 }
@@ -2338,6 +2570,34 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   .pomo-widget { bottom: 1rem; left: 1rem; }
 }
 
+/* Mobile em paisagem: pouca altura. Ancora o pomodoro no canto superior-
+   esquerdo (acima dos controles top-right que vão pra esquerda), e abre
+   o painel para baixo em vez de para cima. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .pomo-widget {
+    top: 0.5rem !important;
+    left: 0.5rem !important;
+    bottom: auto !important;
+    right: auto !important;
+  }
+  .pomo-panel {
+    bottom: auto;
+    top: calc(100% + 6px);
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    width: 280px;
+  }
+  /* Se o mini-player estiver ativo, manter ainda no topo */
+  body:has(.mini-player.active) .pomo-widget {
+    top: 0.5rem !important;
+    bottom: auto !important;
+  }
+  body:has(.mini-player.active.minimized) .pomo-widget {
+    bottom: auto !important;
+    top: 0.5rem !important;
+  }
+}
+
 /* ============================================
    GANTT — melhorias (today overlay, dividers, badge)
    ============================================ */
@@ -2355,7 +2615,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   padding: 5px 11px;
   border-radius: 2px;
   background: var(--paper-deep);
@@ -2426,7 +2685,6 @@ body:has(.mini-player.active.minimized) .pomo-widget {
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.16em;
-  text-transform: uppercase;
   color: var(--accent);
   background: var(--paper-shade);
   padding: 1px 6px;
