@@ -102,15 +102,6 @@
 <div class="toast" id="toast"></div>
 <div class="gantt-tooltip" id="ganttTooltip"></div>
 
-<div class="intensity-ctrl" id="intensityCtrl">
-  <div class="intensity-row">
-    <span class="intensity-icon">◐</span>
-    <input type="range" class="intensity-range" id="intensityRange"
-      min="30" max="1000" value="150" step="10"
-      oninput="setIntensity(this.value)">
-  </div>
-</div>
-
 <div class="mini-player" id="miniPlayer">
   <div class="mini-player-bar">
     <div class="now-playing-dot"></div>
@@ -992,20 +983,7 @@ init();
 // Atualiza a cascata de prazo a cada minuto (para os min/h ficarem vivos)
 setInterval(renderDeadlineCascade, 30000);
 
-// ── INTENSITY CONTROL ─────────────────────
-const INT_KEY = 'planning-repo:bg-intensity';
-function setIntensity(v) {
-  document.documentElement.style.setProperty('--bg-a', (v / 100).toFixed(2));
-  try { localStorage.setItem(INT_KEY, v); } catch(e) {}
-}
-window.setIntensity = setIntensity;
-try {
-  const sv = localStorage.getItem(INT_KEY);
-  if (sv) {
-    document.documentElement.style.setProperty('--bg-a', (sv / 100).toFixed(2));
-    document.getElementById('intensityRange').value = sv;
-  }
-} catch(e) {}
+// setIntensity + restauração agora vivem em shared.js (junto da barra superior).
 
 // ── MINI-PLAYER PERSISTENTE ───────────────
 const NP_KEY = 'planning-repo:nowplaying';

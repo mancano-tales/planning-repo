@@ -317,15 +317,6 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<div class="intensity-ctrl" id="intensityCtrl">
-  <div class="intensity-row">
-    <span class="intensity-icon">◐</span>
-    <input type="range" class="intensity-range" id="intensityRange"
-      min="30" max="1000" value="150" step="10"
-      oninput="setIntensity(this.value)">
-  </div>
-</div>
-
 <script>
 
 const NP_KEY = 'planning-repo:nowplaying';
@@ -362,22 +353,7 @@ function openSearch(q) {
   window.open('https://www.youtube.com/results?search_query=' + q, '_blank', 'noopener');
 }
 
-// ── INTENSITY CONTROL ─────────────────────
-const INT_KEY = 'planning-repo:bg-intensity';
-function setIntensity(v) {
-  document.documentElement.style.setProperty('--bg-a', (v / 100).toFixed(2));
-  try { localStorage.setItem(INT_KEY, v); } catch(e) {}
-}
-window.setIntensity = setIntensity;
-try {
-  const sv = localStorage.getItem(INT_KEY);
-  if (sv) {
-    document.documentElement.style.setProperty('--bg-a', (sv / 100).toFixed(2));
-    document.getElementById('intensityRange').value = sv;
-  }
-} catch(e) {}
-
-// Animação de "ondas" dos blobs de fundo: ver startWaveMotion() em shared.js
+// setIntensity + animação de ondas vivem em shared.js (junto da barra superior).
 
 </script>
 

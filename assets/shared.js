@@ -207,7 +207,7 @@
         }
       } catch (e) {}
       // Flash visual
-      const widget = document.getElementById('pomoWidget');
+      const widget = document.getElementById('topBar');
       if (widget) {
         widget.classList.add('flash');
         setTimeout(() => widget.classList.remove('flash'), 2200);
@@ -236,18 +236,52 @@
     setTimeout(() => ctx.close(), 800);
   }
 
+  // Decide rótulos de navegação por página
+  function buildNavLinks() {
+    const path = window.location.pathname;
+    const isMusic   = /music\.html$/.test(path);
+    const isProject = /project\.html$/.test(path);
+    if (isMusic) {
+      return '<a class="top-bar-link" href="index.html">← Planejamento</a>';
+    }
+    if (isProject) {
+      return '<a class="top-bar-link" href="index.html">← Planejamento</a>'
+           + '<a class="top-bar-link subtle" href="music.html">Música ↗</a>';
+    }
+    // index.html
+    return '<a class="top-bar-link" href="music.html">Música ↗</a>';
+  }
+
   function injectPomoWidget() {
-    if (document.getElementById('pomoWidget')) return;
+    if (document.getElementById('topBar')) return;
     const host = document.body;
     const el = document.createElement('div');
-    el.id = 'pomoWidget';
-    el.className = 'pomo-widget';
+    el.id = 'topBar';
+    el.className = 'top-bar pomo-widget';
     el.innerHTML = `
-      <button type="button" class="pomo-pill" id="pomoPill" aria-label="Pomodoro">
-        <span class="pomo-pill-dot" id="pomoDot"></span>
-        <span class="pomo-pill-time" id="pomoPillTime">25:00</span>
-        <span class="pomo-pill-icon" id="pomoPillIcon">▶</span>
-      </button>
+      <div class="top-bar-row">
+        <div class="top-bar-nav" id="topBarNav">${buildNavLinks()}</div>
+
+        <button type="button" class="pomo-pill" id="pomoPill" aria-label="Pomodoro · clique para expandir">
+          <span class="pomo-pill-dot" id="pomoDot"></span>
+          <span class="pomo-pill-mode" id="pomoPillMode">Foco</span>
+          <span class="pomo-pill-time" id="pomoPillTime">25:00</span>
+          <span class="pomo-pill-icon" id="pomoPillIcon">▶</span>
+        </button>
+
+        <div class="top-bar-ctrls" id="topBarCtrls">
+          <div class="intensity-row">
+            <span class="intensity-icon" title="Intensidade do fundo">◐</span>
+            <input type="range" class="intensity-range" id="intensityRange"
+              min="30" max="1000" value="150" step="10">
+          </div>
+          <div class="palette-ctrl" id="paletteCtrl"></div>
+        </div>
+
+        <button type="button" class="top-bar-toggle" id="topBarToggle"
+          aria-label="Expandir pomodoro">▾</button>
+      </div>
+
       <div class="pomo-panel" id="pomoPanel" hidden>
         <div class="pomo-panel-head">
           <div class="pomo-mode" id="pomoMode">Foco</div>
@@ -298,14 +332,29 @@
       </div>`;
     host.appendChild(el);
 
+    // Slider de intensidade: aplica e persiste
+    const range = document.getElementById('intensityRange');
+    if (range) {
+      try {
+        const sv = localStorage.getItem(INT_KEY);
+        if (sv) {
+          range.value = sv;
+          document.documentElement.style.setProperty('--bg-a', (sv / 100).toFixed(2));
+        }
+      } catch (e) {}
+      range.addEventListener('input', () => setIntensity(range.value));
+    }
+
+    // Pill abre o painel; Shift+click = start/pause rápido
     document.getElementById('pomoPill').addEventListener('click', (ev) => {
-      // Se panel aberto, fecha; senão abre. Permitir clique no ícone para start/pause rápido.
       if (ev.shiftKey) {
         pomoState.running ? pomoPause() : pomoStart();
         return;
       }
       togglePomoPanel();
     });
+    document.getElementById('topBarToggle').addEventListener('click', togglePomoPanel);
+
     document.getElementById('pomoBtnStart').addEventListener('click', () => {
       pomoState.running ? pomoPause() : pomoStart();
     });
@@ -337,14 +386,14 @@
       renderPomo();
     });
 
-    // Fecha o panel ao clicar fora
+    // Fecha o panel ao clicar fora da barra inteira
     document.addEventListener('click', (ev) => {
-      const widget = document.getElementById('pomoWidget');
-      if (!widget) return;
-      if (!widget.contains(ev.target)) {
+      const bar = document.getElementById('topBar');
+      if (!bar) return;
+      if (!bar.contains(ev.target)) {
         const panel = document.getElementById('pomoPanel');
         if (panel && !panel.hidden) panel.hidden = true;
-        widget.classList.remove('open');
+        bar.classList.remove('open');
       }
     });
 
@@ -363,9 +412,15 @@
 
     qlRender();
     renderFocusLine();
-    enablePomoDrag();
-    restorePomoPosition();
   }
+
+  // ── INTENSITY ──────────────────────────
+  const INT_KEY = 'planning-repo:bg-intensity';
+  function setIntensity(v) {
+    document.documentElement.style.setProperty('--bg-a', (v / 100).toFixed(2));
+    try { localStorage.setItem(INT_KEY, v); } catch (e) {}
+  }
+  window.setIntensity = setIntensity;
 
   // ── QUICKLIST (integrada ao painel do Pomodoro) ──
   const QL_KEY = 'planning-repo:quicklist';
@@ -545,96 +600,6 @@
   window.__qlEditKey = qlEditKey;
   window.__qlSetFocus = qlSetFocus;
 
-  // ── DRAG do pomodoro ──────────────────────
-  // Permite arrastar o widget. Posição salva em localStorage como
-  // { top, left } em pixels relativos ao viewport.
-  const POMO_POS_KEY = 'planning-repo:pomodoro-pos';
-  let _dragState = null;
-  let _dragMoved = false;
-
-  function restorePomoPosition() {
-    try {
-      const raw = localStorage.getItem(POMO_POS_KEY);
-      if (!raw) return;
-      const pos = JSON.parse(raw);
-      if (!pos || typeof pos.top !== 'number' || typeof pos.left !== 'number') return;
-      applyPomoPosition(pos.top, pos.left);
-    } catch (e) {}
-  }
-
-  function applyPomoPosition(top, left) {
-    const widget = document.getElementById('pomoWidget');
-    if (!widget) return;
-    const w = widget.offsetWidth || 130;
-    const h = widget.offsetHeight || 40;
-    const maxLeft = window.innerWidth - w - 4;
-    const maxTop = window.innerHeight - h - 4;
-    top = Math.max(4, Math.min(maxTop, top));
-    left = Math.max(4, Math.min(maxLeft, left));
-    widget.style.top = top + 'px';
-    widget.style.left = left + 'px';
-    widget.style.bottom = 'auto';
-    widget.style.right = 'auto';
-  }
-
-  function enablePomoDrag() {
-    const widget = document.getElementById('pomoWidget');
-    const pill = document.getElementById('pomoPill');
-    if (!widget || !pill) return;
-
-    function onDown(ev) {
-      // Botão esquerdo apenas; ignorar quando clica nos botões internos
-      if (ev.button !== undefined && ev.button !== 0) return;
-      const rect = widget.getBoundingClientRect();
-      _dragState = {
-        startX: ev.clientX,
-        startY: ev.clientY,
-        origLeft: rect.left,
-        origTop: rect.top,
-      };
-      _dragMoved = false;
-      widget.classList.add('dragging');
-      pill.setPointerCapture && pill.setPointerCapture(ev.pointerId);
-      ev.preventDefault();
-    }
-    function onMove(ev) {
-      if (!_dragState) return;
-      const dx = ev.clientX - _dragState.startX;
-      const dy = ev.clientY - _dragState.startY;
-      if (!_dragMoved && Math.hypot(dx, dy) > 4) _dragMoved = true;
-      applyPomoPosition(_dragState.origTop + dy, _dragState.origLeft + dx);
-    }
-    function onUp(ev) {
-      if (!_dragState) return;
-      const widgetEl = document.getElementById('pomoWidget');
-      widgetEl.classList.remove('dragging');
-      try { pill.releasePointerCapture && pill.releasePointerCapture(ev.pointerId); } catch (e) {}
-      if (_dragMoved) {
-        const rect = widgetEl.getBoundingClientRect();
-        try { localStorage.setItem(POMO_POS_KEY, JSON.stringify({ top: rect.top, left: rect.left })); } catch (e) {}
-        // Suprime o próximo click para não abrir o panel
-        const swallow = (e) => { e.stopPropagation(); e.preventDefault(); pill.removeEventListener('click', swallow, true); };
-        pill.addEventListener('click', swallow, true);
-      }
-      _dragState = null;
-    }
-
-    pill.addEventListener('pointerdown', onDown);
-    pill.addEventListener('pointermove', onMove);
-    pill.addEventListener('pointerup', onUp);
-    pill.addEventListener('pointercancel', onUp);
-
-    // Reposiciona ao redimensionar a janela
-    window.addEventListener('resize', () => {
-      try {
-        const raw = localStorage.getItem(POMO_POS_KEY);
-        if (!raw) return;
-        const pos = JSON.parse(raw);
-        applyPomoPosition(pos.top, pos.left);
-      } catch (e) {}
-    });
-  }
-
   function requestNotifOnce() {
     try {
       if ('Notification' in window && Notification.permission === 'default') {
@@ -645,10 +610,12 @@
 
   function togglePomoPanel() {
     const panel = document.getElementById('pomoPanel');
-    const widget = document.getElementById('pomoWidget');
+    const widget = document.getElementById('topBar');
     if (!panel || !widget) return;
     panel.hidden = !panel.hidden;
     widget.classList.toggle('open', !panel.hidden);
+    const toggle = document.getElementById('topBarToggle');
+    if (toggle) toggle.textContent = panel.hidden ? '▾' : '▴';
   }
 
   function fmtTime(ms) {
@@ -664,9 +631,10 @@
     const pillTime = document.getElementById('pomoPillTime');
     const pillIcon = document.getElementById('pomoPillIcon');
     const pillDot = document.getElementById('pomoDot');
-    const widget = document.getElementById('pomoWidget');
+    const widget = document.getElementById('topBar');
     const timeEl = document.getElementById('pomoTime');
     const modeEl = document.getElementById('pomoMode');
+    const pillMode = document.getElementById('pomoPillMode');
     const startBtn = document.getElementById('pomoBtnStart');
     const ringFill = document.getElementById('pomoRingFill');
     const sessionsEl = document.getElementById('pomoSessions');
@@ -675,7 +643,9 @@
     if (timeEl) timeEl.textContent = txt;
     if (pillIcon) pillIcon.textContent = pomoState.running ? '❚❚' : '▶';
     if (startBtn) startBtn.textContent = pomoState.running ? 'Pausar' : 'Iniciar';
-    if (modeEl) modeEl.textContent = pomoState.mode === 'work' ? 'Foco' : 'Pausa';
+    const modeLabel = pomoState.mode === 'work' ? 'Foco' : 'Pausa';
+    if (modeEl) modeEl.textContent = modeLabel;
+    if (pillMode) pillMode.textContent = modeLabel;
     if (widget) {
       widget.classList.toggle('running', pomoState.running);
       widget.classList.toggle('mode-break', pomoState.mode === 'break');
@@ -792,18 +762,18 @@
   }
 
   function injectPaletteSelector() {
-    // music.html tem paleta verde fixa — não injetar selector lá
-    if (/music\.html$/.test(window.location.pathname)) return;
-    const intensity = document.getElementById('intensityCtrl');
-    if (!intensity || document.querySelector('.palette-ctrl')) return;
-    const el = document.createElement('div');
-    el.className = 'palette-ctrl';
+    // music.html tem paleta verde fixa — popula o slot só com placeholder
+    const el = document.getElementById('paletteCtrl');
+    if (!el) return;
+    if (/music\.html$/.test(window.location.pathname)) {
+      el.remove();
+      return;
+    }
     el.innerHTML = PALETTES.map(p =>
       `<button type="button" class="palette-opt" data-palette="${p.id}"
         title="${p.name}" style="background: ${p.swatch};"
         aria-label="Paleta ${p.name}"></button>`
     ).join('');
-    intensity.appendChild(el);   // ← agora vai DENTRO do painel combinado
 
     el.querySelectorAll('.palette-opt').forEach(btn => {
       btn.addEventListener('click', () => applyPalette(btn.dataset.palette || ''));
@@ -823,9 +793,9 @@
   function boot() {
     window.__originalTitle = document.title;
     startWaveMotion();
-    injectPaletteSelector();
     injectMinimizeButton();
-    injectPomoWidget();
+    injectPomoWidget();           // cria a barra superior + slots
+    injectPaletteSelector();       // popula slot #paletteCtrl dentro da barra
     renderPomo();
     setInterval(pomoTick, 1000);
   }
