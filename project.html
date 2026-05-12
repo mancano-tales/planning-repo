@@ -103,10 +103,12 @@
 <div class="gantt-tooltip" id="ganttTooltip"></div>
 
 <div class="intensity-ctrl" id="intensityCtrl">
-  <span class="intensity-icon">◐</span>
-  <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="600" value="150" step="10"
-    oninput="setIntensity(this.value)">
+  <div class="intensity-row">
+    <span class="intensity-icon">◐</span>
+    <input type="range" class="intensity-range" id="intensityRange"
+      min="30" max="1000" value="150" step="10"
+      oninput="setIntensity(this.value)">
+  </div>
 </div>
 
 <div class="mini-player" id="miniPlayer">

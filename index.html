@@ -72,15 +72,19 @@
 
 <footer class="footer">
   <div class="controls">
-    <button class="btn primary" onclick="exportManifest()">Exportar manifest.json</button>
+    <button class="btn primary" onclick="newProjectDialog()">+ Novo projeto</button>
+    <button class="btn" onclick="exportManifest()">Exportar manifest.json</button>
+    <button class="btn" onclick="document.getElementById('manifestImport').click()">Importar manifest.json</button>
+    <button class="btn" onclick="document.getElementById('projectImport').click()">Importar projeto.json</button>
     <button class="btn" onclick="resetProjectOrder()">Restaurar ordem original</button>
+    <input type="file" id="manifestImport" accept=".json" style="display:none" onchange="importManifestFile(event)">
+    <input type="file" id="projectImport" accept=".json" multiple style="display:none" onchange="importProjectFile(event)">
   </div>
   <p class="footer-note">
-    Cada projeto vive como um <code>JSON</code> em <code>projects/</code>.
-    A ordem que você definir aqui fica salva no navegador.
-    Para sincronizar entre dispositivos: exporte <code>manifest.json</code> e o
-    <code>progress.json</code> de cada projeto (dentro da página dele), e suba os
-    arquivos no repositório.
+    Cada projeto vive como um <code>JSON</code> em <code>projects/</code>. A ordem
+    que você definir aqui fica salva no navegador. Para sincronizar entre dispositivos:
+    importe os arquivos editados (manifest e projetos) aqui, OU exporte daqui e do
+    botão dentro de cada projeto e suba os arquivos no repositório.
   </p>
 </footer>
 
@@ -89,10 +93,13 @@
 <div class="toast" id="toast"></div>
 
 <div class="intensity-ctrl" id="intensityCtrl">
-  <span class="intensity-icon">◐</span>
-  <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="600" value="150" step="10"
-    oninput="setIntensity(this.value)">
+  <div class="intensity-row">
+    <span class="intensity-icon">◐</span>
+    <input type="range" class="intensity-range" id="intensityRange"
+      min="30" max="1000" value="150" step="10"
+      oninput="setIntensity(this.value)">
+  </div>
+  <!-- .palette-ctrl é injetada aqui pelo shared.js -->
 </div>
 
 <div class="mini-player" id="miniPlayer">
@@ -115,6 +122,14 @@ const STORAGE_PREFIX = 'planning-repo:project:';
 function today() { return new Date(); }
 
 async function loadManifest() {
+  // Manifest importado pelo usuário tem prioridade sobre o JSON do repo
+  try {
+    const raw = localStorage.getItem('planning-repo:manifest-cache');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.projects)) return parsed;
+    }
+  } catch (e) {}
   try {
     const res = await fetch('projects/manifest.json?t=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -619,6 +634,109 @@ function renderAgenda(metas, projects) {
 }
 
 render();
+
+// ── IMPORT manifest e projetos (sobrescreve localStorage) ──
+const MANIFEST_CACHE_KEY = 'planning-repo:manifest-cache';
+
+function importManifestFile(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.projects || !Array.isArray(data.projects)) {
+        throw new Error('formato inválido (esperado: { projects: [...] })');
+      }
+      localStorage.setItem(MANIFEST_CACHE_KEY, JSON.stringify(data));
+      // Limpa overrides e ordem porque o manifest agora é a fonte de verdade
+      try { localStorage.removeItem(MANIFEST_OVERRIDES_KEY); } catch (e) {}
+      try { localStorage.removeItem(PROJECT_ORDER_KEY); } catch (e) {}
+      render();
+      alert('manifest.json importado · ' + data.projects.length + ' projetos.');
+    } catch (err) {
+      alert('Arquivo inválido: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+function importProjectFile(ev) {
+  const files = Array.from(ev.target.files || []);
+  if (!files.length) return;
+  let loaded = 0, errors = [];
+  let pending = files.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.id || !Array.isArray(data.phases)) {
+          throw new Error('falta `id` ou `phases`');
+        }
+        localStorage.setItem(STORAGE_PREFIX + data.id, JSON.stringify(data));
+        loaded++;
+      } catch (err) {
+        errors.push(file.name + ': ' + err.message);
+      } finally {
+        pending--;
+        if (pending === 0) finalize();
+      }
+    };
+    reader.onerror = () => { errors.push(file.name); pending--; if (pending === 0) finalize(); };
+    reader.readAsText(file);
+  });
+  function finalize() {
+    render();
+    let msg = loaded + ' projeto(s) importado(s).';
+    if (errors.length) msg += '\nErros:\n' + errors.join('\n');
+    alert(msg);
+  }
+  ev.target.value = '';
+}
+
+// ── NEW PROJECT ─────────────────────────
+async function newProjectDialog() {
+  const name = (prompt('Nome do projeto') || '').trim();
+  if (!name) return;
+  // ID slug a partir do nome
+  const baseId = name.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'projeto';
+  // Garantir unicidade
+  const manifest = await loadManifest();
+  let id = baseId, n = 2;
+  while (manifest.projects.some(p => p.id === id)) {
+    id = baseId + '-' + n; n++;
+  }
+  const deadline = (prompt('Prazo final (YYYY-MM-DD)', '') || '').trim() || null;
+  const subtitle = (prompt('Subtítulo (opcional)', '') || '').trim();
+  const today = new Date().toISOString().slice(0, 10);
+  const newProj = {
+    id, name, subtitle: subtitle || undefined,
+    deadline: deadline || undefined,
+    lastUpdated: new Date().toISOString(),
+    phases: [{
+      id: 'fase-1',
+      name: 'Etapa I',
+      start: today,
+      end: deadline || today,
+      tasks: [],
+    }],
+  };
+  // Salva o projeto e o manifest no localStorage
+  localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(newProj));
+  manifest.projects.push({ id, name, subtitle: subtitle || undefined, deadline: deadline || undefined });
+  localStorage.setItem(MANIFEST_CACHE_KEY, JSON.stringify(manifest));
+  // Limpa override e ordem (o novo manifest cacheado é a fonte)
+  try { localStorage.removeItem(MANIFEST_OVERRIDES_KEY); } catch (e) {}
+  render();
+}
+
+window.newProjectDialog = newProjectDialog;
+window.importManifestFile = importManifestFile;
+window.importProjectFile = importProjectFile;
 
 // ── EXPORT MANIFEST / RESET ORDER ─────────
 async function exportManifest() {
