@@ -1,0 +1,177 @@
+{
+  "id": "antitrust",
+  "name": "Antitrust as Industrial Policy",
+  "subtitle": "Paper com André Nahoum",
+  "deadline": "2026-12-15",
+  "lastUpdated": "2026-05-11T23:31:33.729Z",
+  "phases": [
+    {
+      "id": "framing",
+      "name": "Enquadramento e escopo",
+      "start": "2026-05-15",
+      "end": "2026-06-30",
+      "tasks": [
+        {
+          "text": "Reunião de scoping com André — pergunta de pesquisa",
+          "done": false
+        },
+        {
+          "text": "Definir tese provisória do paper",
+          "done": true
+        },
+        {
+          "text": "Delimitar recorte temporal e geográfico",
+          "done": true
+        },
+        {
+          "text": "Identificar contribuição em relação à literatura",
+          "done": true
+        },
+        {
+          "text": "Definir veículo-alvo (journal) e suas normas",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "lit",
+      "name": "Revisão bibliográfica",
+      "start": "2026-06-30",
+      "end": "2026-08-15",
+      "tasks": [
+        {
+          "text": "Levantar literatura clássica antitrust (Chicago vs. estruturalistas)",
+          "done": true
+        },
+        {
+          "text": "Levantar literatura de política industrial moderna (Mazzucato, Rodrik, Cherif/Hasanov)",
+          "done": false
+        },
+        {
+          "text": "Mapear ponte conceitual entre antitrust e industrial policy",
+          "done": true
+        },
+        {
+          "text": "Casos históricos relevantes (EUA pós-guerra, Coreia, China)",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "evidencia",
+      "name": "Construção de evidências",
+      "start": "2026-08-15",
+      "end": "2026-09-30",
+      "tasks": [
+        {
+          "text": "Selecionar casos empíricos para ilustrar o argumento",
+          "done": false
+        },
+        {
+          "text": "Coletar documentos primários (decisões antitrust, planos industriais)",
+          "done": false
+        },
+        {
+          "text": "Definir método (estudo de caso comparado, process tracing, etc.)",
+          "done": false
+        },
+        {
+          "text": "Codificar e organizar material",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "draft",
+      "name": "Redação do primeiro rascunho",
+      "start": "2026-09-30",
+      "end": "2026-11-15",
+      "tasks": [
+        {
+          "text": "Outline detalhado de seções (~2 páginas)",
+          "done": false
+        },
+        {
+          "text": "Dividir seções entre os autores",
+          "done": false
+        },
+        {
+          "text": "Redigir introdução e problema",
+          "done": false
+        },
+        {
+          "text": "Redigir revisão de literatura",
+          "done": false
+        },
+        {
+          "text": "Redigir argumento teórico",
+          "done": false
+        },
+        {
+          "text": "Redigir seção empírica / casos",
+          "done": false
+        },
+        {
+          "text": "Redigir discussão e implicações",
+          "done": false
+        },
+        {
+          "text": "Redigir conclusão",
+          "done": false
+        },
+        {
+          "text": "Costura e harmonização de voz entre autores",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "feedback",
+      "name": "Feedback e revisão",
+      "start": "2026-11-15",
+      "end": "2026-12-05",
+      "tasks": [
+        {
+          "text": "Apresentar em seminário interno para feedback",
+          "done": false
+        },
+        {
+          "text": "Incorporar revisão entre pares (leitores convidados)",
+          "done": false
+        },
+        {
+          "text": "Revisão de estilo e clareza",
+          "done": false
+        },
+        {
+          "text": "Verificar coerência argumentativa fim-a-fim",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "subm",
+      "name": "Submissão",
+      "start": "2026-12-05",
+      "end": "2026-12-15",
+      "tasks": [
+        {
+          "text": "Formatação conforme journal-alvo",
+          "done": false
+        },
+        {
+          "text": "Normalizar referências (Zotero → estilo do journal)",
+          "done": false
+        },
+        {
+          "text": "Redigir cover letter",
+          "done": false
+        },
+        {
+          "text": "Submissão na plataforma",
+          "done": false
+        }
+      ]
+    }
+  ]
+}

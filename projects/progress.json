@@ -1,27 +1,24 @@
 {
-  "id": "dissertacao",
-  "name": "Dissertação de Mestrado",
-  "subtitle": "Finalização e depósito até setembro de 2026",
+  "lastUpdated": "2026-05-11T15:47:29.231Z",
   "deadline": "2026-09-29",
-  "lastUpdated": "2026-05-11T22:59:00.346Z",
-  "phases": [
-    {
-      "id": "cap3",
+  "phases": {
+    "cap3": {
       "name": "Capítulo 3 — Qualitativo (artigo internacional)",
+      "dates": "10 mai → 20 jun",
       "start": "2026-05-10",
       "end": "2026-06-20",
       "tasks": [
         {
           "text": "Finalizar coleta de dados — entrevistas e documentos pendentes",
-          "done": true
+          "done": false
         },
         {
           "text": "Organizar e codificar o corpus de dados",
-          "done": true
+          "done": false
         },
         {
           "text": "Aplicar framework analítico — padrões e categorias",
-          "done": true
+          "done": false
         },
         {
           "text": "Definir argumento central e outline do artigo (EN)",
@@ -29,7 +26,7 @@
         },
         {
           "text": "Redigir introdução e revisão de literatura (EN)",
-          "done": false
+          "done": true
         },
         {
           "text": "Redigir seção metodológica (EN)",
@@ -49,13 +46,13 @@
         },
         {
           "text": "Revisão e polish — versão submissível a periódico",
-          "done": true
+          "done": false
         }
       ]
     },
-    {
-      "id": "cap2",
+    "cap2": {
       "name": "Capítulo 2 — Descritivo / quantitativo",
+      "dates": "20 jun → 25 jul",
       "start": "2026-06-20",
       "end": "2026-07-25",
       "tasks": [
@@ -69,19 +66,19 @@
         },
         {
           "text": "Cruzar com dados ENEM via identificador mascarado",
-          "done": false
+          "done": true
         },
         {
           "text": "Definir estrutura e argumento descritivo do capítulo",
-          "done": false
+          "done": true
         },
         {
-          "text": "Produzir tabelas descritivas exploratórias",
+          "text": "Produzir tabelas descritivas principais",
           "done": true
         },
         {
           "text": "Produzir figuras e visualizações",
-          "done": false
+          "done": true
         },
         {
           "text": "Redigir narrativa analítica das tabelas e figuras",
@@ -92,20 +89,24 @@
           "done": false
         },
         {
-          "text": "Produzir tabelas descritivas finais",
+          "text": "Escrever introdução",
+          "done": false
+        },
+        {
+          "text": "Escrever a revisão de literatura do capítulo",
           "done": false
         }
       ]
     },
-    {
-      "id": "cap1",
+    "cap1": {
       "name": "Capítulo 1 — Teórico / revisão de literatura",
+      "dates": "25 jul → 22 ago",
       "start": "2026-07-25",
       "end": "2026-08-22",
       "tasks": [
         {
           "text": "Inventariar fichas e notas já produzidas (Zotero)",
-          "done": false
+          "done": true
         },
         {
           "text": "Decidir: manter unificado ou desmembrar em partes",
@@ -125,7 +126,7 @@
         },
         {
           "text": "Verificar cobertura bibliográfica — OpenAlex/Zotero",
-          "done": false
+          "done": true
         },
         {
           "text": "Rascunho completo enviado ao orientador",
@@ -134,16 +135,12 @@
         {
           "text": "Revisão de coesão e argumentação",
           "done": false
-        },
-        {
-          "text": "Grosso da revisão de literatura",
-          "done": true
         }
       ]
     },
-    {
-      "id": "integ",
+    "integ": {
       "name": "Integração e textos de costura",
+      "dates": "22 ago → 01 set",
       "start": "2026-08-22",
       "end": "2026-09-01",
       "tasks": [
@@ -164,24 +161,24 @@
           "done": false
         },
         {
-          "text": "Consolidar referências — Zotero → APA7",
+          "text": "Consolidar referências — Zotero → ABNT",
           "done": false
         }
       ]
     },
-    {
-      "id": "intro",
+    "intro": {
       "name": "Introdução",
+      "dates": "01 set → 08 set",
       "start": "2026-09-01",
       "end": "2026-09-08",
       "tasks": [
         {
           "text": "Redigir problema de pesquisa e justificativa",
-          "done": true
+          "done": false
         },
         {
           "text": "Definir objetivos e perguntas de pesquisa",
-          "done": true
+          "done": false
         },
         {
           "text": "Apresentar estrutura da dissertação",
@@ -190,20 +187,12 @@
         {
           "text": "Revisão e ajuste fino",
           "done": false
-        },
-        {
-          "text": "Sintetizar os argumentos da dissertação.",
-          "done": false
-        },
-        {
-          "text": "Fazer o Roadmap da dissertação",
-          "done": false
         }
       ]
     },
-    {
-      "id": "concl",
+    "concl": {
       "name": "Considerações finais",
+      "dates": "08 set → 15 set",
       "start": "2026-09-08",
       "end": "2026-09-15",
       "tasks": [
@@ -225,9 +214,9 @@
         }
       ]
     },
-    {
-      "id": "rev",
+    "rev": {
       "name": "Revisão geral e depósito",
+      "dates": "15 set → 29 set",
       "start": "2026-09-15",
       "end": "2026-09-29",
       "tasks": [
@@ -244,7 +233,7 @@
           "done": false
         },
         {
-          "text": "Formatação da Referências em APA7 — margens, fontes, sumário",
+          "text": "Formatação ABNT — margens, fontes, sumário",
           "done": false
         },
         {
@@ -261,9 +250,9 @@
         },
         {
           "text": "Depósito no sistema institucional",
-          "done": true
+          "done": false
         }
       ]
     }
-  ]
+  }
 }
