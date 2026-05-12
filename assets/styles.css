@@ -26,6 +26,94 @@
   --sans: 'IBM Plex Sans', -apple-system, sans-serif;
   --mono: 'IBM Plex Mono', 'Courier New', monospace;
   --bg-a: 1.5;
+
+  /* 7 cores do gradient orgânico do fundo (triplets RGB).
+     Cada paleta sobrescreve abaixo. Default: Terracota. */
+  --pal-c1: 200 95 35;
+  --pal-c2: 174 67 30;
+  --pal-c3: 208 98 36;
+  --pal-c4: 160 55 22;
+  --pal-c5: 210 148 58;
+  --pal-c6: 130 120 48;
+  --pal-c7: 210 138 52;
+}
+
+/* ─── Paletas calmantes ─────────────────── */
+
+:root.palette-sage {
+  --paper: #F1EEE2;
+  --paper-shade: #E8E5D7;
+  --paper-deep: #D9D6C6;
+  --accent: #7A8A50;
+  --accent-deep: #5A6E38;
+  --accent-soft: #99A872;
+  --accent-tint: #E0E2C8;
+  --done: #B89B5F;
+  --done-tint: #EFE6CC;
+  --pal-c1: 122 138 80;
+  --pal-c2: 100 115 60;
+  --pal-c3: 140 155 95;
+  --pal-c4: 85 100 50;
+  --pal-c5: 180 165 110;
+  --pal-c6: 130 110 80;
+  --pal-c7: 165 145 95;
+}
+
+:root.palette-ocean {
+  --paper: #ECF0F0;
+  --paper-shade: #E0E6E6;
+  --paper-deep: #CCD5D5;
+  --accent: #4A7B95;
+  --accent-deep: #2D5A75;
+  --accent-soft: #6A9BB8;
+  --accent-tint: #D0E0E8;
+  --done: #6F8C90;
+  --done-tint: #DCE5E6;
+  --pal-c1: 100 140 175;
+  --pal-c2: 70 110 145;
+  --pal-c3: 130 165 190;
+  --pal-c4: 60 95 130;
+  --pal-c5: 140 175 175;
+  --pal-c6: 100 130 130;
+  --pal-c7: 120 155 175;
+}
+
+:root.palette-lavender {
+  --paper: #F2EFF2;
+  --paper-shade: #E8E3E8;
+  --paper-deep: #D6D0D6;
+  --accent: #8A75B0;
+  --accent-deep: #6A5590;
+  --accent-soft: #A899C4;
+  --accent-tint: #E3DCEC;
+  --done: #B08CA0;
+  --done-tint: #E9D8E2;
+  --pal-c1: 140 125 175;
+  --pal-c2: 110 95 145;
+  --pal-c3: 165 150 195;
+  --pal-c4: 90 80 130;
+  --pal-c5: 175 155 165;
+  --pal-c6: 130 110 140;
+  --pal-c7: 155 135 170;
+}
+
+:root.palette-forest {
+  --paper: #EEEEE5;
+  --paper-shade: #E2E2D5;
+  --paper-deep: #CECEC0;
+  --accent: #4A6E2A;
+  --accent-deep: #2F4E14;
+  --accent-soft: #6F9050;
+  --accent-tint: #D8E0C8;
+  --done: #8A8035;
+  --done-tint: #E5E3C2;
+  --pal-c1: 80 110 70;
+  --pal-c2: 55 85 50;
+  --pal-c3: 110 140 90;
+  --pal-c4: 40 70 35;
+  --pal-c5: 130 130 80;
+  --pal-c6: 90 100 65;
+  --pal-c7: 100 130 80;
 }
 
 @media (prefers-color-scheme: dark) {
