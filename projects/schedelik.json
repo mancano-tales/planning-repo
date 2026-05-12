@@ -1,0 +1,72 @@
+{
+  "id": "schedelik",
+  "name": "Resenha — Schedelik",
+  "subtitle": "Resenha de livro com Eric Rinaldi",
+  "deadline": "2026-08-31",
+  "lastUpdated": "2026-05-11T12:00:00.000Z",
+  "phases": [
+    {
+      "id": "leitura",
+      "name": "Leitura crítica e fichamento",
+      "start": "2026-05-15",
+      "end": "2026-06-15",
+      "tasks": [
+        { "text": "Definir versão do livro e cronograma de leitura com Eric", "done": false },
+        { "text": "Leitura completa em primeira passada", "done": false },
+        { "text": "Fichamento por capítulo (Quarto/Zotero)", "done": false },
+        { "text": "Reunião de alinhamento com Eric — impressões iniciais", "done": false },
+        { "text": "Mapear argumento central da autora e cadeia de evidências", "done": false }
+      ]
+    },
+    {
+      "id": "mapa",
+      "name": "Mapa argumentativo e enquadramento",
+      "start": "2026-06-15",
+      "end": "2026-07-05",
+      "tasks": [
+        { "text": "Síntese conjunta dos pontos fortes do livro", "done": false },
+        { "text": "Síntese conjunta das lacunas e críticas possíveis", "done": false },
+        { "text": "Posicionar livro na literatura de variedades de capitalismo / desenvolvimentismo", "done": false },
+        { "text": "Definir ângulo da resenha (descritiva vs. crítica vs. ensaística)", "done": false },
+        { "text": "Escolher veículo de submissão (DADOS, BIB, RBCS, etc.)", "done": false },
+        { "text": "Verificar normas de submissão do veículo escolhido", "done": false }
+      ]
+    },
+    {
+      "id": "esboco",
+      "name": "Esboço e divisão de seções",
+      "start": "2026-07-05",
+      "end": "2026-07-20",
+      "tasks": [
+        { "text": "Outline de 1 página com argumento da resenha", "done": false },
+        { "text": "Dividir seções entre os autores", "done": false },
+        { "text": "Definir tom e voz da resenha", "done": false },
+        { "text": "Coletar referências de apoio (Zotero)", "done": false }
+      ]
+    },
+    {
+      "id": "redacao",
+      "name": "Redação colaborativa",
+      "start": "2026-07-20",
+      "end": "2026-08-15",
+      "tasks": [
+        { "text": "Primeiro rascunho — seções individuais", "done": false },
+        { "text": "Costura e harmonização de voz", "done": false },
+        { "text": "Revisão cruzada entre os autores", "done": false },
+        { "text": "Ajuste de extensão para os limites do veículo", "done": false }
+      ]
+    },
+    {
+      "id": "submissao",
+      "name": "Revisão final e submissão",
+      "start": "2026-08-15",
+      "end": "2026-08-31",
+      "tasks": [
+        { "text": "Revisão de estilo e coesão", "done": false },
+        { "text": "Normalizar referências conforme veículo", "done": false },
+        { "text": "Carta de submissão", "done": false },
+        { "text": "Submissão na plataforma do periódico", "done": false }
+      ]
+    }
+  ]
+}

@@ -8,10 +8,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,0..100&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
+<script src="assets/shared.js" defer></script>
 </head>
 <body>
 
 <div class="container">
+
+<section class="today-panel">
+  <div class="today-time" id="todayTime">—<span class="sep">:</span>—</div>
+  <div class="today-right">
+    <div class="today-date" id="todayDate">—</div>
+    <div class="today-greeting" id="todayGreeting">Olá, <em>Tales</em></div>
+    <div class="today-focus-wrap">
+      <span class="today-focus-label">Foco</span>
+      <input type="text" class="today-focus-input" id="todayFocus"
+        placeholder="O que importa hoje?" maxlength="120">
+      <button type="button" class="today-focus-check" id="todayFocusCheck"
+        aria-label="Marcar foco como concluído" title="Marcar como concluído">✓</button>
+    </div>
+  </div>
+</section>
 
 <header class="masthead">
   <div class="eyebrow">Gabinete de Trabalho · Tales Mancano · <a href="music.html">Música</a></div>
@@ -44,27 +60,47 @@
   </div>
 </section>
 
+<h2 class="section-heading">Agenda · próximos prazos de tarefas</h2>
+<div id="agendaList" class="agenda-empty">—</div>
+
 <h2 class="section-heading">Projetos</h2>
 
 <div id="projectList" class="loading">Carregando projetos…</div>
 
-<h2 class="section-heading">Lista rápida</h2>
-<div class="quicklist-panel">
-  <div id="quicklistItems"></div>
-  <div class="task-add">
-    <input type="text" class="task-add-input" id="quicklistInput"
-      placeholder="Nova nota ou tarefa rápida…" onkeydown="qlKey(event)">
-    <button class="task-add-btn" onclick="qlAdd()">Adicionar</button>
+<!-- Lista rápida agora vive em um widget flutuante (canto inferior-direito, arrastável).
+     Injetado e estilizado por shared.js — mesmo padrão do Pomodoro. -->
+<div id="quicklistWidget" class="ql-widget">
+  <button type="button" class="ql-pill" id="qlPill" aria-label="Lista rápida">
+    <span class="ql-pill-icon">✎</span>
+    <span class="ql-pill-count" id="qlPillCount">0</span>
+    <span class="ql-pill-label">notas</span>
+  </button>
+  <div class="ql-panel" id="qlPanel" hidden>
+    <div class="ql-panel-head">
+      <div class="ql-panel-title">Lista rápida</div>
+      <div class="ql-panel-meta" id="qlPanelMeta">—</div>
+    </div>
+    <div id="quicklistItems" class="ql-items"></div>
+    <div class="task-add">
+      <input type="text" class="task-add-input" id="quicklistInput"
+        placeholder="Nova nota…" onkeydown="qlKey(event)">
+      <button class="task-add-btn" onclick="qlAdd()">+</button>
+    </div>
+    <p class="quicklist-note">Salvo neste navegador · não sincroniza entre dispositivos</p>
   </div>
-  <p class="quicklist-note">Salvo neste navegador · não sincroniza entre dispositivos</p>
 </div>
 
 <footer class="footer">
+  <div class="controls">
+    <button class="btn primary" onclick="exportManifest()">Exportar manifest.json</button>
+    <button class="btn" onclick="resetProjectOrder()">Restaurar ordem original</button>
+  </div>
   <p class="footer-note">
     Cada projeto vive como um <code>JSON</code> em <code>projects/</code>.
-    Para adicionar um novo, é só criar mais um arquivo lá e referenciá-lo em <code>manifest.json</code>.
-    O progresso fica salvo no navegador automaticamente; para sincronizar entre dispositivos,
-    use <code>Exportar progress.json</code> dentro de cada projeto.
+    A ordem que você definir aqui fica salva no navegador.
+    Para sincronizar entre dispositivos: exporte <code>manifest.json</code> e o
+    <code>progress.json</code> de cada projeto (dentro da página dele), e suba os
+    arquivos no repositório.
   </p>
 </footer>
 
@@ -75,7 +111,7 @@
 <div class="intensity-ctrl" id="intensityCtrl">
   <span class="intensity-icon">◐</span>
   <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="300" value="150" step="10"
+    min="30" max="600" value="150" step="10"
     oninput="setIntensity(this.value)">
 </div>
 
@@ -180,10 +216,16 @@ function daysUntil(dateStr) {
 }
 
 function timeUntilLabel(ms) {
+  if (typeof window.formatRelativeMs === 'function') return window.formatRelativeMs(ms);
   if (ms <= 0) return '0d';
   const d = Math.floor(ms / (1000 * 60 * 60 * 24));
   const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   return d + 'd ' + h + 'h';
+}
+
+function daysLabel(days) {
+  if (typeof window.formatRelativeDays === 'function') return window.formatRelativeDays(days);
+  return days + ' dias';
 }
 
 function isProjectActive(project) {
@@ -213,7 +255,7 @@ function projectCardHTML(meta, project, index) {
   const statusLabel = done ? 'Concluído' : active ? 'Em andamento' : urgent ? 'Prazo próximo' : 'Pendente';
 
   return `
-    <a href="project.html?id=${encodeURIComponent(meta.id)}" class="project-card-link" style="text-decoration: none; color: inherit; display: block;">
+    <a href="project.html?id=${encodeURIComponent(meta.id)}" class="project-card-link" draggable="true" data-id="${escapeHtml(meta.id)}">
       <article class="project-card ${active ? 'active' : ''} ${done ? 'done' : ''}">
         <div class="project-roman">${ROMAN[index] || (index + 1)}</div>
         <div class="project-info">
@@ -222,11 +264,12 @@ function projectCardHTML(meta, project, index) {
           <div class="project-meta-row">
             <span><span class="dot ${statusDot}"></span>${statusLabel}</span>
             <span>Fase: ${escapeHtml(currentLabel)}</span>
-            <span>${deadline}${days !== null && !done ? ' · ' + days + ' dias' : ''}</span>
+            <span>${deadline}${days !== null && !done ? ' · ' + daysLabel(days) : ''}</span>
             <span>${stats.done}/${stats.total} tarefas</span>
           </div>
         </div>
         <div class="project-stats-cell">
+          <span class="drag-handle" aria-label="Arrastar para reordenar" title="Arrastar para reordenar">⋮⋮</span>
           <div class="project-pct-block">
             <div class="project-pct">${stats.pct}<span class="mark">%</span></div>
           </div>
@@ -238,6 +281,88 @@ function projectCardHTML(meta, project, index) {
       </article>
     </a>
   `;
+}
+
+// ── ORDEM CUSTOMIZADA DOS PROJETOS ─────────
+// Os IDs em ordem ficam em localStorage. Caso falte algum (projeto novo),
+// é anexado ao final na ordem do manifest.
+const PROJECT_ORDER_KEY = 'planning-repo:project-order';
+
+function loadProjectOrder() {
+  try {
+    const raw = localStorage.getItem(PROJECT_ORDER_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : null;
+  } catch (e) { return null; }
+}
+
+function saveProjectOrder(ids) {
+  try { localStorage.setItem(PROJECT_ORDER_KEY, JSON.stringify(ids)); } catch (e) {}
+}
+
+function applyProjectOrder(manifestProjects) {
+  const stored = loadProjectOrder();
+  if (!stored) return manifestProjects;
+  const byId = {};
+  manifestProjects.forEach(p => { byId[p.id] = p; });
+  const ordered = [];
+  stored.forEach(id => { if (byId[id]) { ordered.push(byId[id]); delete byId[id]; } });
+  // Anexa projetos novos que não estavam na ordem salva
+  manifestProjects.forEach(p => { if (byId[p.id]) ordered.push(p); });
+  return ordered;
+}
+
+function installProjectDnD() {
+  const list = document.getElementById('projectList');
+  if (!list) return;
+  let dragId = null;
+
+  list.querySelectorAll('.project-card-link').forEach(link => {
+    link.addEventListener('dragstart', (e) => {
+      dragId = link.dataset.id;
+      link.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
+    });
+    link.addEventListener('dragend', () => {
+      link.classList.remove('dragging');
+      list.querySelectorAll('.project-card-link').forEach(el => {
+        el.classList.remove('drop-above', 'drop-below');
+      });
+      dragId = null;
+    });
+    link.addEventListener('dragover', (e) => {
+      if (!dragId || link.dataset.id === dragId) return;
+      e.preventDefault();
+      const rect = link.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      link.classList.toggle('drop-above', !after);
+      link.classList.toggle('drop-below', after);
+    });
+    link.addEventListener('dragleave', () => {
+      link.classList.remove('drop-above', 'drop-below');
+    });
+    link.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (!dragId || link.dataset.id === dragId) return;
+      const rect = link.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      const ids = [...list.querySelectorAll('.project-card-link')].map(el => el.dataset.id);
+      const from = ids.indexOf(dragId);
+      let to = ids.indexOf(link.dataset.id);
+      if (from < 0 || to < 0) return;
+      ids.splice(from, 1);
+      to = ids.indexOf(link.dataset.id);
+      if (after) to = to + 1;
+      ids.splice(to, 0, dragId);
+      saveProjectOrder(ids);
+      // Re-renderiza chamando render() de novo
+      render();
+    });
+    // Evita que o click pós-drag abra o projeto: o "drag" do anchor não
+    // dispara click no fim, então não precisa de proteção extra.
+  });
 }
 
 function escapeHtml(s) {
@@ -255,6 +380,10 @@ async function render() {
     listEl.innerHTML = 'Nenhum projeto cadastrado ainda. Adicione um arquivo em <code>projects/</code> e referencie em <code>manifest.json</code>.';
     return;
   }
+
+  // Aplica ordem customizada salva (drag-and-drop do usuário)
+  manifest.projects = applyProjectOrder(manifest.projects);
+  const hasCustomOrder = !!loadProjectOrder();
 
   // Carrega todos os projetos em paralelo
   const projects = await Promise.all(manifest.projects.map(m => loadProject(m.id)));
@@ -293,27 +422,103 @@ async function render() {
   document.getElementById('overallBar').style.width = ovPct + '%';
   document.getElementById('overallMeta').textContent = totalDone + ' de ' + totalTasks + ' tarefas concluídas';
 
-  // Renderiza cards (projetos ativos primeiro, depois concluídos, depois pendentes)
-  const ranked = manifest.projects.map((m, i) => ({ meta: m, project: projects[i], idx: i }))
-    .sort((a, b) => {
+  // Ordem = manifest (já reordenado pelo drag salvo, se houver).
+  // Projetos concluídos vão pro fim, exceto se o user salvou ordem customizada.
+  let ranked = manifest.projects.map((m, i) => ({ meta: m, project: projects[i], idx: i }));
+  if (!hasCustomOrder) {
+    ranked.sort((a, b) => {
       const aDone = a.project ? isProjectDone(a.project) : false;
       const bDone = b.project ? isProjectDone(b.project) : false;
       if (aDone !== bDone) return aDone ? 1 : -1;
-      const aActive = a.project ? isProjectActive(a.project) : true;
-      const bActive = b.project ? isProjectActive(b.project) : true;
-      if (aActive !== bActive) return aActive ? -1 : 1;
-      // ordena por deadline
-      const aD = a.project ? a.project.deadline : a.meta.deadline;
-      const bD = b.project ? b.project.deadline : b.meta.deadline;
-      if (aD && bD) return new Date(aD) - new Date(bD);
       return 0;
     });
+  }
 
   listEl.className = 'project-list';
   listEl.innerHTML = ranked.map((r, i) => projectCardHTML(r.meta, r.project, i)).join('');
+
+  installProjectDnD();
+  renderAgenda(manifest.projects, projects);
+}
+
+function renderAgenda(metas, projects) {
+  const items = [];
+  projects.forEach((p, i) => {
+    if (!p || !Array.isArray(p.phases)) return;
+    const projName = (metas[i] && metas[i].name) || p.name || metas[i].id;
+    const projId = metas[i].id;
+    p.phases.forEach(phase => {
+      if (!Array.isArray(phase.tasks)) return;
+      phase.tasks.forEach((t, ti) => {
+        if (!t.deadline || t.done) return;
+        items.push({
+          projId,
+          projName,
+          phaseName: phase.name,
+          phaseId: phase.id,
+          task: t.text,
+          deadline: t.deadline,
+        });
+      });
+    });
+  });
+
+  const el = document.getElementById('agendaList');
+  if (!el) return;
+  if (items.length === 0) {
+    el.className = 'agenda-empty';
+    el.innerHTML = 'Nenhuma tarefa com prazo ainda. Abra um projeto e clique em <code>+ data</code> em uma tarefa para definir.';
+    return;
+  }
+  items.sort((a, b) => a.deadline.localeCompare(b.deadline));
+  const now = today();
+  const monthsShort = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  el.className = 'agenda-list';
+  el.innerHTML = items.slice(0, 8).map(it => {
+    const d = new Date(it.deadline + 'T23:59:59');
+    const days = Math.ceil((d - now) / 86400000);
+    let cls = '';
+    let rel;
+    if (days < 0) { cls = 'overdue'; rel = 'há ' + (-days) + 'd'; }
+    else if (days === 0) { cls = 'urgent'; rel = 'hoje'; }
+    else if (days <= 7) { cls = 'urgent'; rel = 'em ' + days + 'd'; }
+    else { rel = daysLabel(days); }
+    const dateLabel = d.getDate() + ' ' + monthsShort[d.getMonth()];
+    const phaseShort = (it.phaseName || '').split('—')[0].trim();
+    return `
+      <a class="agenda-row ${cls}" href="project.html?id=${encodeURIComponent(it.projId)}">
+        <div class="agenda-date">${dateLabel}<span class="agenda-rel">${rel}</span></div>
+        <div class="agenda-content">
+          <div class="agenda-task">${escapeHtml(it.task)}</div>
+          <div class="agenda-project">${escapeHtml(it.projName)} · <span class="agenda-phase">${escapeHtml(phaseShort)}</span></div>
+        </div>
+        <div class="agenda-arrow">→</div>
+      </a>`;
+  }).join('');
 }
 
 render();
+
+// ── EXPORT MANIFEST / RESET ORDER ─────────
+async function exportManifest() {
+  const manifest = await loadManifest();
+  manifest.projects = applyProjectOrder(manifest.projects);
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'manifest.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function resetProjectOrder() {
+  if (!confirm('Voltar para a ordem original do repositório?')) return;
+  try { localStorage.removeItem(PROJECT_ORDER_KEY); } catch (e) {}
+  render();
+}
+window.exportManifest = exportManifest;
+window.resetProjectOrder = resetProjectOrder;
 
 // ── QUICKLIST ──────────────────────────────
 const QL_KEY = 'planning-repo:quicklist';
@@ -328,9 +533,19 @@ function qlSave(d) {
 function qlRender() {
   const { items } = qlLoad();
   const el = document.getElementById('quicklistItems');
+  const count = document.getElementById('qlPillCount');
+  const meta = document.getElementById('qlPanelMeta');
+  if (count) {
+    const open = items.filter(it => !it.done).length;
+    count.textContent = open;
+  }
+  if (meta) {
+    const done = items.filter(it => it.done).length;
+    meta.textContent = items.length === 0 ? 'vazio' : (done + ' de ' + items.length + ' feitas');
+  }
   if (!el) return;
   if (items.length === 0) {
-    el.innerHTML = '<div class="quicklist-empty">Vazio por enquanto — adicione uma nota acima.</div>';
+    el.innerHTML = '<div class="quicklist-empty">Vazio — adicione uma nota.</div>';
     return;
   }
   el.innerHTML = items.map((item, i) => `
@@ -343,6 +558,85 @@ function qlRender() {
         onkeydown="qlEditKey(event,this,${i})">${escapeHtml(item.text)}</span>
       <button class="task-del" onclick="qlDel(${i})">×</button>
     </div>`).join('');
+}
+
+// ── QUICKLIST: toggle, drag, posição persistida ──
+const QL_POS_KEY = 'planning-repo:quicklist-pos';
+
+function installQuicklistWidget() {
+  const widget = document.getElementById('quicklistWidget');
+  const pill = document.getElementById('qlPill');
+  const panel = document.getElementById('qlPanel');
+  if (!widget || !pill || !panel) return;
+
+  // restaurar posição
+  try {
+    const raw = localStorage.getItem(QL_POS_KEY);
+    if (raw) {
+      const pos = JSON.parse(raw);
+      if (pos && typeof pos.top === 'number' && typeof pos.left === 'number') {
+        applyQlPosition(pos.top, pos.left);
+      }
+    }
+  } catch (e) {}
+
+  // toggle do panel via click (sem drag)
+  let dragState = null;
+  let moved = false;
+  pill.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== undefined && ev.button !== 0) return;
+    const rect = widget.getBoundingClientRect();
+    dragState = { startX: ev.clientX, startY: ev.clientY, origLeft: rect.left, origTop: rect.top };
+    moved = false;
+    widget.classList.add('dragging');
+    pill.setPointerCapture && pill.setPointerCapture(ev.pointerId);
+    ev.preventDefault();
+  });
+  pill.addEventListener('pointermove', (ev) => {
+    if (!dragState) return;
+    const dx = ev.clientX - dragState.startX;
+    const dy = ev.clientY - dragState.startY;
+    if (!moved && Math.hypot(dx, dy) > 4) moved = true;
+    applyQlPosition(dragState.origTop + dy, dragState.origLeft + dx);
+  });
+  function endDrag(ev) {
+    if (!dragState) return;
+    widget.classList.remove('dragging');
+    try { pill.releasePointerCapture && pill.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (moved) {
+      const rect = widget.getBoundingClientRect();
+      try { localStorage.setItem(QL_POS_KEY, JSON.stringify({ top: rect.top, left: rect.left })); } catch (e) {}
+      const swallow = (e) => { e.stopPropagation(); e.preventDefault(); pill.removeEventListener('click', swallow, true); };
+      pill.addEventListener('click', swallow, true);
+    }
+    dragState = null;
+  }
+  pill.addEventListener('pointerup', endDrag);
+  pill.addEventListener('pointercancel', endDrag);
+
+  pill.addEventListener('click', () => {
+    panel.hidden = !panel.hidden;
+  });
+
+  // fechar ao clicar fora
+  document.addEventListener('click', (ev) => {
+    if (!widget.contains(ev.target) && !panel.hidden) {
+      panel.hidden = true;
+    }
+  });
+}
+
+function applyQlPosition(top, left) {
+  const widget = document.getElementById('quicklistWidget');
+  if (!widget) return;
+  const w = widget.offsetWidth || 130;
+  const h = widget.offsetHeight || 40;
+  top = Math.max(4, Math.min(window.innerHeight - h - 4, top));
+  left = Math.max(4, Math.min(window.innerWidth - w - 4, left));
+  widget.style.top = top + 'px';
+  widget.style.left = left + 'px';
+  widget.style.bottom = 'auto';
+  widget.style.right = 'auto';
 }
 function qlAdd() {
   const inp = document.getElementById('quicklistInput');
@@ -371,6 +665,7 @@ function qlEditKey(e, el, i) {
   if (e.key === 'Escape') { const d = qlLoad(); el.textContent = d.items[i]?.text || ''; el.blur(); }
 }
 qlRender();
+installQuicklistWidget();
 
 // ── INTENSITY CONTROL ─────────────────────
 const INT_KEY = 'planning-repo:bg-intensity';
@@ -413,6 +708,79 @@ function closePlayer() {
 
 window.closePlayer = closePlayer;
 initPlayer();
+
+// ── TODAY PANEL: relógio, saudação, foco ─
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+function updateClock() {
+  const now = new Date();
+  const h = pad2(now.getHours());
+  const m = pad2(now.getMinutes());
+  const el = document.getElementById('todayTime');
+  if (el) el.innerHTML = h + '<span class="sep">:</span>' + m;
+}
+
+function updateGreeting() {
+  const h = new Date().getHours();
+  let g;
+  if (h < 5) g = 'Boa madrugada';
+  else if (h < 12) g = 'Bom dia';
+  else if (h < 18) g = 'Boa tarde';
+  else g = 'Boa noite';
+  const el = document.getElementById('todayGreeting');
+  if (el) el.innerHTML = g + ', <em>Tales</em>';
+}
+
+function updateDate() {
+  const now = new Date();
+  const wd = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'][now.getDay()];
+  const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const el = document.getElementById('todayDate');
+  if (el) el.textContent = wd + ' · ' + now.getDate() + ' de ' + months[now.getMonth()];
+}
+
+const FOCUS_KEY_PREFIX = 'planning-repo:focus:';
+function focusKey() {
+  const d = new Date();
+  return FOCUS_KEY_PREFIX + d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+function initFocus() {
+  const inp = document.getElementById('todayFocus');
+  const btn = document.getElementById('todayFocusCheck');
+  if (!inp || !btn) return;
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(focusKey()) || 'null'); } catch(e) {}
+  if (stored && typeof stored === 'object') {
+    inp.value = stored.text || '';
+    if (stored.done) {
+      inp.classList.add('done');
+      btn.classList.add('done');
+    }
+  }
+  function save() {
+    const text = inp.value.trim();
+    const done = btn.classList.contains('done');
+    if (!text && !done) {
+      try { localStorage.removeItem(focusKey()); } catch(e) {}
+      return;
+    }
+    try { localStorage.setItem(focusKey(), JSON.stringify({ text, done })); } catch(e) {}
+  }
+  inp.addEventListener('input', save);
+  inp.addEventListener('blur', save);
+  btn.addEventListener('click', () => {
+    const isDone = btn.classList.toggle('done');
+    inp.classList.toggle('done', isDone);
+    save();
+  });
+}
+
+updateClock();
+updateGreeting();
+updateDate();
+initFocus();
+setInterval(() => { updateClock(); updateGreeting(); }, 30000);
 
 // ── MOUSE BLOOM ───────────────────────────
 document.addEventListener('mousemove', e => {

@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,0..100&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
+<script src="assets/shared.js" defer></script>
 </head>
 <body>
 
@@ -27,7 +28,11 @@
     </div>
     <div class="meta-block right">
       <div class="meta-label">Tempo restante</div>
-      <div class="meta-value accent" id="daysLeft">—</div>
+      <div class="deadline-cascade" id="deadlineCascade">
+        <div class="dl-headline" id="dlHeadline">—</div>
+        <div class="dl-breakdown" id="dlBreakdown"></div>
+        <div class="dl-clock" id="dlClock">—</div>
+      </div>
     </div>
   </div>
 </header>
@@ -52,9 +57,18 @@
 <div class="phases" id="phases"></div>
 
 <div class="gantt" id="ganttContainer" style="display: none;">
-  <div class="gantt-title">Linha do tempo</div>
+  <div class="gantt-header-row">
+    <div class="gantt-title">Linha do tempo</div>
+    <div class="gantt-trajectory" id="ganttTrajectory" style="display: none;"></div>
+  </div>
   <div class="gantt-months" id="ganttMonths"></div>
-  <div id="ganttRows"></div>
+  <div class="gantt-rows-wrap">
+    <div id="ganttRows"></div>
+    <div class="gantt-overlay" id="ganttOverlay" aria-hidden="true">
+      <div class="gantt-overlay-spacer"></div>
+      <div class="gantt-overlay-tracks" id="ganttOverlayTracks"></div>
+    </div>
+  </div>
 </div>
 
 <footer class="footer">
@@ -81,7 +95,7 @@
 <div class="intensity-ctrl" id="intensityCtrl">
   <span class="intensity-icon">◐</span>
   <input type="range" class="intensity-range" id="intensityRange"
-    min="30" max="300" value="150" step="10"
+    min="30" max="600" value="150" step="10"
     oninput="setIntensity(this.value)">
 </div>
 
@@ -199,11 +213,77 @@ function isDonePhase(p) {
 
 function timeUntilDeadline() {
   if (!project.deadline) return null;
-  const ms = new Date(project.deadline) - today();
+  const ms = new Date(project.deadline + 'T23:59:59') - today();
+  if (typeof window.formatRelativeMs === 'function') return window.formatRelativeMs(ms);
   if (ms <= 0) return '0d';
   const d = Math.floor(ms / (1000 * 60 * 60 * 24));
   const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   return d + 'd ' + h + 'h';
+}
+
+// Calcula o breakdown ADITIVO: meses + semanas + dias + h + min que SOMAM
+// até o tempo restante. Não é redundante — cada unidade é o "resto" da anterior.
+function deadlineBreakdown(ms) {
+  if (ms <= 0) {
+    return { overdue: true, totalDays: 0, parts: [], clock: 'vencido' };
+  }
+  // Calcula meses inteiros via comparação de datas (mais preciso que 30.44)
+  const now = new Date();
+  const target = new Date(now.getTime() + ms);
+  let months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+  // Ajusta se ainda não passamos do dia-do-mês do alvo
+  const monthAnchor = new Date(now.getFullYear(), now.getMonth() + months, now.getDate(),
+                               now.getHours(), now.getMinutes(), now.getSeconds());
+  if (monthAnchor > target) {
+    months -= 1;
+  }
+  const afterMonths = new Date(now.getFullYear(), now.getMonth() + months, now.getDate(),
+                               now.getHours(), now.getMinutes(), now.getSeconds());
+  let remainingMs = target - afterMonths;
+
+  const dayMs = 86400000;
+  const weekMs = 7 * dayMs;
+  const weeks = Math.floor(remainingMs / weekMs);
+  remainingMs -= weeks * weekMs;
+
+  const days = Math.floor(remainingMs / dayMs);
+  remainingMs -= days * dayMs;
+
+  const hours = Math.floor(remainingMs / 3600000);
+  remainingMs -= hours * 3600000;
+  const minutes = Math.floor(remainingMs / 60000);
+
+  const parts = [];
+  if (months > 0) parts.push({ n: months, u: months === 1 ? 'mês' : 'meses' });
+  if (weeks > 0)  parts.push({ n: weeks,  u: weeks === 1 ? 'sem' : 'sem' });
+  if (days > 0)   parts.push({ n: days,   u: days === 1 ? 'dia' : 'dias' });
+
+  const totalDays = Math.floor(ms / dayMs);
+  const clock = hours + 'h ' + (minutes < 10 ? '0' : '') + minutes + 'min';
+
+  return { overdue: false, totalDays, parts, clock };
+}
+
+function renderDeadlineCascade() {
+  const cascade = document.getElementById('deadlineCascade');
+  if (!cascade || !project || !project.deadline) return;
+  const ms = new Date(project.deadline + 'T23:59:59') - new Date();
+  const bd = deadlineBreakdown(ms);
+  cascade.classList.toggle('overdue', !!bd.overdue);
+  const headline = document.getElementById('dlHeadline');
+  const breakdown = document.getElementById('dlBreakdown');
+  const clock = document.getElementById('dlClock');
+  if (bd.overdue) {
+    headline.innerHTML = 'vencido';
+    breakdown.innerHTML = '';
+    clock.textContent = '';
+    return;
+  }
+  headline.innerHTML = bd.totalDays + '<span class="dl-headline-unit">dias</span>';
+  breakdown.innerHTML = bd.parts.length
+    ? bd.parts.map(p => `<span class="dl-num">${p.n}</span><span class="dl-unit"> ${p.u}</span>`).join(' <span class="dl-sep">·</span> ')
+    : '';
+  clock.textContent = bd.clock;
 }
 
 function formatDate(dateStr) {
@@ -219,6 +299,29 @@ function escapeHtml(s) {
   }[c]));
 }
 
+function fmtShortDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return '—';
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  return d.getDate() + ' ' + months[d.getMonth()];
+}
+
+function taskDeadlineInfo(dateStr, done) {
+  if (!dateStr) return { cls: 'empty', label: '+ data', title: 'Adicionar prazo' };
+  const d = new Date(dateStr + 'T23:59:59');
+  if (isNaN(d.getTime())) return { cls: 'empty', label: '+ data', title: 'Data inválida' };
+  const now = today();
+  const days = Math.ceil((d - now) / 86400000);
+  const label = fmtShortDate(dateStr);
+  let cls = 'soft';
+  let title = days >= 0 ? 'em ' + days + 'd · ' + dateStr : 'venceu há ' + (-days) + 'd · ' + dateStr;
+  if (done) { cls = 'soft'; }
+  else if (days < 0) { cls = 'overdue'; }
+  else if (days <= 7) { cls = 'urgent'; }
+  return { cls, label, title };
+}
+
 function render() {
   document.title = (project.name || 'Projeto') + ' — Planejamento';
   document.getElementById('projectIdLabel').textContent = PROJECT_ID;
@@ -227,8 +330,7 @@ function render() {
   document.getElementById('projectSubtitle').textContent = project.subtitle || '';
   document.getElementById('deadlineLabel').textContent = formatDate(project.deadline);
 
-  const timeLeft = timeUntilDeadline();
-  document.getElementById('daysLeft').textContent = timeLeft !== null ? timeLeft : '—';
+  renderDeadlineCascade();
 
   const ov = overallProgress();
   document.getElementById('overallPct').textContent = ov.pct;
@@ -248,8 +350,68 @@ function render() {
   }
 
   renderPhases();
+  installTaskDnD();
   renderGantt();
   updateLastSaved();
+}
+
+function installTaskDnD() {
+  let dragging = null;
+
+  document.querySelectorAll('.task .drag-handle[draggable="true"]').forEach(handle => {
+    const taskEl = handle.closest('.task');
+    if (!taskEl) return;
+    handle.addEventListener('dragstart', (e) => {
+      dragging = {
+        phaseId: taskEl.dataset.phase,
+        ti: parseInt(taskEl.dataset.ti, 10),
+        el: taskEl,
+      };
+      taskEl.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', taskEl.dataset.phase + ':' + taskEl.dataset.ti); } catch (err) {}
+    });
+    handle.addEventListener('dragend', () => {
+      taskEl.classList.remove('dragging');
+      document.querySelectorAll('.task.drop-above, .task.drop-below')
+        .forEach(el => el.classList.remove('drop-above', 'drop-below'));
+      dragging = null;
+    });
+  });
+
+  document.querySelectorAll('.task').forEach(taskEl => {
+    taskEl.addEventListener('dragover', (e) => {
+      if (!dragging) return;
+      if (taskEl.dataset.phase !== dragging.phaseId) return;
+      if (taskEl === dragging.el) return;
+      e.preventDefault();
+      const rect = taskEl.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      taskEl.classList.toggle('drop-above', !after);
+      taskEl.classList.toggle('drop-below', after);
+    });
+    taskEl.addEventListener('dragleave', () => {
+      taskEl.classList.remove('drop-above', 'drop-below');
+    });
+    taskEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (!dragging) return;
+      if (taskEl.dataset.phase !== dragging.phaseId) return;
+      const phase = getPhase(dragging.phaseId);
+      if (!phase) return;
+      const fromIdx = dragging.ti;
+      const targetTi = parseInt(taskEl.dataset.ti, 10);
+      const rect = taskEl.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      const [item] = phase.tasks.splice(fromIdx, 1);
+      let insertAt = targetTi;
+      if (fromIdx < targetTi) insertAt = targetTi - 1;
+      if (after) insertAt += 1;
+      phase.tasks.splice(insertAt, 0, item);
+      saveLocal();
+      render();
+    });
+  });
 }
 
 function renderPhases() {
@@ -270,14 +432,21 @@ function renderPhases() {
     if (open) {
       tasksHTML = '<div class="task-list">';
       phase.tasks.forEach((task, ti) => {
+        const dl = task.deadline;
+        const dlInfo = taskDeadlineInfo(dl, task.done);
+        const dlBtn = dl
+          ? `<button class="task-deadline ${dlInfo.cls}" onclick="editTaskDeadline(event,'${phase.id}',${ti})" title="${dlInfo.title}">${dlInfo.label}</button>`
+          : `<button class="task-deadline empty" onclick="editTaskDeadline(event,'${phase.id}',${ti})" title="Adicionar prazo">+ data</button>`;
         tasksHTML += `
-          <div class="task">
+          <div class="task" data-phase="${phase.id}" data-ti="${ti}">
+            <span class="drag-handle" draggable="true" aria-label="Arrastar tarefa" title="Arrastar para reordenar">⋮⋮</span>
             <input type="checkbox" class="task-cb" ${task.done ? 'checked' : ''}
               onchange="toggleTask('${phase.id}', ${ti})" aria-label="${escapeHtml(task.text)}">
             <span class="task-text${task.done ? ' done' : ''}" contenteditable="false"
               onclick="startEdit(this, '${phase.id}', ${ti})"
               onblur="finishEdit(this, '${phase.id}', ${ti})"
               onkeydown="editKey(event, this, '${phase.id}', ${ti})">${escapeHtml(task.text)}</span>
+            ${dlBtn}
             <button class="task-del" onclick="delTask('${phase.id}', ${ti})" aria-label="Remover">×</button>
           </div>`;
       });
@@ -335,13 +504,21 @@ function renderGantt() {
   const monthsContainer = document.getElementById('ganttMonths');
   const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const months = [];
+  const monthBoundaries = []; // posições em % onde cada mês começa (a partir do 2º)
   let cursor = new Date(gStart);
   while (cursor < gEnd) {
-    months.push(monthNames[cursor.getMonth()]);
+    months.push({
+      label: monthNames[cursor.getMonth()],
+      year: cursor.getFullYear()
+    });
+    const boundary = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    if (boundary < gEnd) {
+      monthBoundaries.push(((boundary - gStart) / totalRange) * 100);
+    }
     cursor.setMonth(cursor.getMonth() + 1);
   }
   monthsContainer.style.gridTemplateColumns = `100px repeat(${months.length}, 1fr)`;
-  monthsContainer.innerHTML = '<div></div>' + months.map(m => `<div class="gantt-month">${m}</div>`).join('');
+  monthsContainer.innerHTML = '<div></div>' + months.map(m => `<div class="gantt-month">${m.label}</div>`).join('');
 
   const todayPct = ((today() - gStart) / totalRange) * 100;
   const todayInRange = todayPct >= 0 && todayPct <= 100;
@@ -368,8 +545,6 @@ function renderGantt() {
     else shellClass += ' upcoming';
 
     const short = phase.name.replace('Capítulo ', 'Cap. ').split('—')[0].trim();
-    const todayMarker = todayInRange ?
-      `<div class="gantt-today" style="left: ${todayPct.toFixed(2)}%"></div>` : '';
 
     const row = document.createElement('div');
     row.className = 'gantt-row';
@@ -384,11 +559,46 @@ function renderGantt() {
           onmouseleave="ganttTooltipHide()">
           <div class="gantt-bar-fill" style="width: 0%"></div>
         </div>
-        ${todayMarker}
       </div>`;
     rowsEl.appendChild(row);
     fillEls.push({ el: row.querySelector('.gantt-bar-fill'), pct: pr.pct });
   });
+
+  // Overlay: today line + month dividers (atravessam todas as fases)
+  const overlayTracks = document.getElementById('ganttOverlayTracks');
+  let overlayHTML = '';
+  monthBoundaries.forEach(pct => {
+    overlayHTML += `<div class="gantt-month-divider" style="left: ${pct.toFixed(2)}%;"></div>`;
+  });
+  if (todayInRange) {
+    overlayHTML += `<div class="gantt-today-line" style="left: ${todayPct.toFixed(2)}%;"></div>`;
+  }
+  overlayTracks.innerHTML = overlayHTML;
+
+  // Badge de trajetória: planejado linear vs. progresso real
+  const trajEl = document.getElementById('ganttTrajectory');
+  const ov = overallProgress();
+  if (todayInRange && ov.total > 0) {
+    const plannedPct = Math.max(0, Math.min(100, todayPct));
+    const actualPct = ov.pct;
+    const delta = Math.round(actualPct - plannedPct);
+    let cls, label;
+    if (Math.abs(delta) <= 3) {
+      cls = 'on-track';
+      label = `No prazo · <span class="gtraj-num">${actualPct}%</span> vs. previsto ${Math.round(plannedPct)}%`;
+    } else if (delta > 0) {
+      cls = 'ahead';
+      label = `Adiantado <span class="gtraj-num">+${delta}%</span> · ${actualPct}% real`;
+    } else {
+      cls = 'behind';
+      label = `Atrasado <span class="gtraj-num">${delta}%</span> · ${actualPct}% real`;
+    }
+    trajEl.className = 'gantt-trajectory ' + cls;
+    trajEl.innerHTML = label;
+    trajEl.style.display = '';
+  } else {
+    trajEl.style.display = 'none';
+  }
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -463,6 +673,49 @@ function delTask(phaseId, ti) {
   saveLocal();
   render();
   showToast('Tarefa removida');
+}
+
+function editTaskDeadline(ev, phaseId, ti) {
+  ev.stopPropagation();
+  const phase = getPhase(phaseId);
+  if (!phase) return;
+  const task = phase.tasks[ti];
+  const btn = ev.currentTarget;
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'task-deadline-input';
+  inp.value = task.deadline || '';
+  if (phase.end) inp.max = phase.end;
+  if (phase.start) inp.min = phase.start;
+  btn.replaceWith(inp);
+  inp.focus();
+  if (inp.showPicker) try { inp.showPicker(); } catch (e) {}
+
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    const v = inp.value || null;
+    task.deadline = v;
+    if (!v) delete task.deadline;
+    saveLocal();
+    render();
+  };
+  inp.addEventListener('change', commit);
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { committed = true; render(); }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Permitir limpar via Ctrl+Backspace
+      if (e.ctrlKey || e.metaKey) {
+        committed = true;
+        delete task.deadline;
+        saveLocal();
+        render();
+      }
+    }
+  });
 }
 
 function addTask(phaseId) {
@@ -609,6 +862,7 @@ window.finishEdit = finishEdit;
 window.editKey = editKey;
 window.delTask = delTask;
 window.addTask = addTask;
+window.editTaskDeadline = editTaskDeadline;
 window.addKey = addKey;
 window.exportJSON = exportJSON;
 window.importJSON = importJSON;
@@ -616,6 +870,9 @@ window.syncFromRepo = syncFromRepo;
 window.resetToCanonical = resetToCanonical;
 
 init();
+
+// Atualiza a cascata de prazo a cada minuto (para os min/h ficarem vivos)
+setInterval(renderDeadlineCascade, 30000);
 
 // ── INTENSITY CONTROL ─────────────────────
 const INT_KEY = 'planning-repo:bg-intensity';
