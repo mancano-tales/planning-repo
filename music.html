@@ -375,10 +375,7 @@ try {
   }
 } catch(e) {}
 
-document.addEventListener('mousemove', e => {
-  document.documentElement.style.setProperty('--mx', (e.clientX / window.innerWidth * 100).toFixed(1) + '%');
-  document.documentElement.style.setProperty('--my', (e.clientY / window.innerHeight * 100).toFixed(1) + '%');
-});
+// Animação de "ondas" dos blobs de fundo: ver startWaveMotion() em shared.js
 
 </script>
 
