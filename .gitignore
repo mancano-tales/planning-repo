@@ -3,6 +3,13 @@
 /dissertacao.json
 /manifest.json
 /styles.css
+wallpapers/
+assets/wallpapers/
+
 
 # Configuração interna do Claude Code
 .claude/
+.Rproj.user
+.positai
+.Rproj
+.Rhistory
