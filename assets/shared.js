@@ -257,23 +257,44 @@
         <div class="pomo-ring">
           <div class="pomo-ring-fill" id="pomoRingFill"></div>
         </div>
+        <div class="pomo-focus-line" id="pomoFocusLine" hidden>
+          <span class="pomo-focus-label">Trabalhando em</span>
+          <span class="pomo-focus-text" id="pomoFocusText">—</span>
+          <button type="button" class="pomo-focus-clear" id="pomoFocusClear" title="Limpar foco">×</button>
+        </div>
         <div class="pomo-controls">
           <button type="button" class="pomo-btn primary" id="pomoBtnStart">Iniciar</button>
           <button type="button" class="pomo-btn" id="pomoBtnReset">Reiniciar</button>
           <button type="button" class="pomo-btn" id="pomoBtnSkip">Pular</button>
         </div>
-        <div class="pomo-settings">
-          <label class="pomo-set">
-            <span class="pomo-set-label">Foco</span>
-            <input type="number" min="1" max="120" step="1" id="pomoWorkMin">
-            <span class="pomo-set-unit">min</span>
-          </label>
-          <label class="pomo-set">
-            <span class="pomo-set-label">Pausa</span>
-            <input type="number" min="1" max="60" step="1" id="pomoBreakMin">
-            <span class="pomo-set-unit">min</span>
-          </label>
+
+        <div class="pomo-ql">
+          <div class="pomo-ql-head">
+            <span class="pomo-ql-title">Lista rápida</span>
+            <span class="pomo-ql-count" id="pomoQlCount">0</span>
+          </div>
+          <div class="pomo-ql-items" id="pomoQlItems"></div>
+          <div class="pomo-ql-add">
+            <input type="text" id="pomoQlInput" placeholder="+ nova nota…">
+            <button type="button" id="pomoQlAdd" aria-label="Adicionar">+</button>
+          </div>
         </div>
+
+        <details class="pomo-settings-details">
+          <summary id="pomoSettingsSummary">Foco 25 min · Pausa 5 min</summary>
+          <div class="pomo-settings">
+            <label class="pomo-set">
+              <span class="pomo-set-label">Foco</span>
+              <input type="number" min="1" max="120" step="1" id="pomoWorkMin">
+              <span class="pomo-set-unit">min</span>
+            </label>
+            <label class="pomo-set">
+              <span class="pomo-set-label">Pausa</span>
+              <input type="number" min="1" max="60" step="1" id="pomoBreakMin">
+              <span class="pomo-set-unit">min</span>
+            </label>
+          </div>
+        </details>
       </div>`;
     host.appendChild(el);
 
@@ -330,9 +351,199 @@
     // Permissão de notificação ao primeiro clique
     document.getElementById('pomoPill').addEventListener('click', requestNotifOnce, { once: true });
 
+    // Quicklist integrada
+    document.getElementById('pomoQlAdd').addEventListener('click', qlAdd);
+    document.getElementById('pomoQlInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') qlAdd();
+    });
+    document.getElementById('pomoFocusClear').addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearFocusItem();
+    });
+
+    qlRender();
+    renderFocusLine();
     enablePomoDrag();
     restorePomoPosition();
   }
+
+  // ── QUICKLIST (integrada ao painel do Pomodoro) ──
+  const QL_KEY = 'planning-repo:quicklist';
+  const QL_FOCUS_KEY = 'planning-repo:quicklist-focus';
+
+  function qlLoad() {
+    try { return JSON.parse(localStorage.getItem(QL_KEY)) || { items: [] }; }
+    catch (e) { return { items: [] }; }
+  }
+  function qlSave(d) {
+    try { localStorage.setItem(QL_KEY, JSON.stringify(d)); } catch (e) {}
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function qlRender() {
+    const data = qlLoad();
+    const items = data.items;
+    const itemsEl = document.getElementById('pomoQlItems');
+    const countEl = document.getElementById('pomoQlCount');
+    if (countEl) {
+      const open = items.filter(it => !it.done).length;
+      countEl.textContent = open;
+      countEl.classList.toggle('zero', open === 0);
+    }
+    if (!itemsEl) return;
+    if (items.length === 0) {
+      itemsEl.innerHTML = '<div class="pomo-ql-empty">Vazio — adicione uma nota.</div>';
+      return;
+    }
+    const focusIdx = getFocusIdx();
+    itemsEl.innerHTML = items.map((item, i) => {
+      const isFocus = i === focusIdx && !item.done;
+      return `
+        <div class="pomo-ql-item${isFocus ? ' focus' : ''}${item.done ? ' done' : ''}" data-i="${i}">
+          <input type="checkbox" class="task-cb" ${item.done ? 'checked' : ''}
+            onchange="window.__qlToggle(${i})">
+          <span class="pomo-ql-text" title="${escapeHtml(item.text)}"
+            ondblclick="window.__qlStartEdit(this,${i})"
+            onblur="window.__qlFinishEdit(this,${i})"
+            onkeydown="window.__qlEditKey(event,this,${i})">${escapeHtml(item.text)}</span>
+          <button type="button" class="pomo-ql-focus" title="${isFocus ? 'É o foco atual' : 'Marcar como foco do pomodoro'}"
+            onclick="window.__qlSetFocus(${i})">${isFocus ? '◉' : '○'}</button>
+          <button type="button" class="pomo-ql-del" onclick="window.__qlDel(${i})" aria-label="Remover">×</button>
+        </div>`;
+    }).join('');
+  }
+
+  function qlAdd() {
+    const inp = document.getElementById('pomoQlInput');
+    if (!inp) return;
+    const txt = inp.value.trim();
+    if (!txt) return;
+    const d = qlLoad();
+    d.items.push({ text: txt, done: false });
+    qlSave(d);
+    inp.value = '';
+    qlRender();
+    renderFocusLine();
+    inp.focus();
+  }
+
+  function qlToggle(i) {
+    const d = qlLoad();
+    if (!d.items[i]) return;
+    d.items[i].done = !d.items[i].done;
+    qlSave(d);
+    // Se a tarefa "focada" foi marcada como feita, limpa o foco
+    if (d.items[i].done && getFocusId() === d.items[i].id) {
+      clearFocusItem();
+    }
+    qlRender();
+    renderFocusLine();
+  }
+
+  function qlDel(i) {
+    const d = qlLoad();
+    if (!d.items[i]) return;
+    const wasFocus = i === getFocusIdx();
+    d.items.splice(i, 1);
+    qlSave(d);
+    if (wasFocus) clearFocusItem();
+    qlRender();
+    renderFocusLine();
+  }
+
+  function qlStartEdit(el, i) {
+    el.contentEditable = 'true';
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function qlFinishEdit(el, i) {
+    el.contentEditable = 'false';
+    const d = qlLoad();
+    if (!d.items[i]) return;
+    const txt = el.textContent.trim();
+    if (txt) d.items[i].text = txt;
+    else el.textContent = d.items[i].text;
+    qlSave(d);
+    renderFocusLine();
+  }
+
+  function qlEditKey(e, el, i) {
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    if (e.key === 'Escape') {
+      const d = qlLoad();
+      if (d.items[i]) el.textContent = d.items[i].text;
+      el.blur();
+    }
+  }
+
+  // Foco do pomodoro: índice da tarefa atualmente "em foco".
+  function getFocusIdx() {
+    try {
+      const raw = localStorage.getItem(QL_FOCUS_KEY);
+      if (!raw) return -1;
+      const n = parseInt(raw, 10);
+      const items = qlLoad().items;
+      if (n >= 0 && n < items.length && !items[n].done) return n;
+      return -1;
+    } catch (e) { return -1; }
+  }
+  function getFocusId() {
+    const idx = getFocusIdx();
+    if (idx < 0) return null;
+    const items = qlLoad().items;
+    return items[idx] ? items[idx].id : null;
+  }
+  function qlSetFocus(i) {
+    const items = qlLoad().items;
+    if (!items[i] || items[i].done) return;
+    const current = getFocusIdx();
+    if (current === i) {
+      clearFocusItem();
+    } else {
+      try { localStorage.setItem(QL_FOCUS_KEY, String(i)); } catch (e) {}
+    }
+    qlRender();
+    renderFocusLine();
+  }
+  function clearFocusItem() {
+    try { localStorage.removeItem(QL_FOCUS_KEY); } catch (e) {}
+    qlRender();
+    renderFocusLine();
+  }
+
+  function renderFocusLine() {
+    const line = document.getElementById('pomoFocusLine');
+    const text = document.getElementById('pomoFocusText');
+    if (!line || !text) return;
+    const idx = getFocusIdx();
+    if (idx < 0) {
+      line.hidden = true;
+      return;
+    }
+    const items = qlLoad().items;
+    if (!items[idx]) { line.hidden = true; return; }
+    line.hidden = false;
+    text.textContent = items[idx].text;
+  }
+
+  // Expose para os onclicks inline
+  window.__qlToggle = qlToggle;
+  window.__qlDel = qlDel;
+  window.__qlStartEdit = qlStartEdit;
+  window.__qlFinishEdit = qlFinishEdit;
+  window.__qlEditKey = qlEditKey;
+  window.__qlSetFocus = qlSetFocus;
 
   // ── DRAG do pomodoro ──────────────────────
   // Permite arrastar o widget. Posição salva em localStorage como
@@ -485,6 +696,12 @@
     } else if (window.__originalTitle) {
       document.title = window.__originalTitle;
     }
+
+    // Resumo das settings no <summary>
+    const summary = document.getElementById('pomoSettingsSummary');
+    if (summary) {
+      summary.textContent = 'Foco ' + pomoState.workMin + ' min · Pausa ' + pomoState.breakMin + ' min';
+    }
   }
 
   function pomoTick() {
@@ -514,68 +731,84 @@
     }
   });
 
-  // ── WALLPAPER (Momentum-like) ─────────────
-  // Foto de fundo discreta, tinta com paper-color por cima.
-  // Rotaciona diariamente; clique no relógio do today-panel troca manualmente.
-  const WALLPAPERS = ['vernazza', 'sandstone', 'banff', 'tatras', 'chureito', 'bettmerhorn'];
-  const WP_KEY = 'planning-repo:wallpaper';
-
-  function pickWallpaperForToday() {
-    const d = new Date();
-    const dayNum = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-    return WALLPAPERS[dayNum % WALLPAPERS.length];
-  }
-
-  function applyWallpaper(name) {
-    if (!name || !WALLPAPERS.includes(name)) return;
-    // O CSS-var é consumido na .wp-bg (definida em assets/styles.css), então o
-    // path relativo precisa ser resolvido a partir desse CSS — usamos URL absoluto.
-    const base = new URL('wallpapers/' + name + '.jpg', new URL('assets/', document.baseURI)).href;
-    document.documentElement.style.setProperty('--wp-url', `url("${base}")`);
-  }
-
-  function initWallpaper() {
-    // Só faz sentido se houver um .today-panel na página (apenas index.html)
-    if (!document.querySelector('.today-panel')) {
-      // Limpa a var pra não vazar o filename
-      document.documentElement.style.setProperty('--wp-url', 'none');
+  // ── ONDAS — animação calmante dos blobs de fundo ──
+  // Substitui o mousemove. Move --mx/--my em duas senoides com frequências
+  // diferentes, criando órbitas elípticas lentas e relaxantes.
+  function startWaveMotion() {
+    const prefersReduced = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      document.documentElement.style.setProperty('--mx', '50%');
+      document.documentElement.style.setProperty('--my', '70%');
       return;
     }
-    let chosen = null;
-    try {
-      const raw = localStorage.getItem(WP_KEY);
-      if (raw) {
-        const obj = JSON.parse(raw);
-        if (obj && obj.date === todayStr() && obj.name && WALLPAPERS.includes(obj.name)) {
-          chosen = obj.name;
-        }
-      }
-    } catch (e) {}
-    if (!chosen) {
-      chosen = pickWallpaperForToday();
-      try { localStorage.setItem(WP_KEY, JSON.stringify({ date: todayStr(), name: chosen })); } catch (e) {}
+    function tick(t) {
+      const e = t / 1000;
+      // Períodos ~80s e ~120s para evitar ciclos óbvios
+      const mx = 50 + 28 * Math.sin(e * (2 * Math.PI / 80));
+      const my = 65 + 20 * Math.sin(e * (2 * Math.PI / 120) + 1.3);
+      document.documentElement.style.setProperty('--mx', mx.toFixed(2) + '%');
+      document.documentElement.style.setProperty('--my', my.toFixed(2) + '%');
+      requestAnimationFrame(tick);
     }
-    applyWallpaper(chosen);
+    requestAnimationFrame(tick);
+  }
 
-    // Clicar no relógio do today-panel cicla pra próxima
-    const clock = document.getElementById('todayTime');
-    if (clock) {
-      clock.style.cursor = 'pointer';
-      clock.title = 'Clique para trocar de wallpaper';
-      clock.addEventListener('click', () => {
-        let cur = chosen;
-        const idx = WALLPAPERS.indexOf(cur);
-        chosen = WALLPAPERS[(idx + 1) % WALLPAPERS.length];
-        applyWallpaper(chosen);
-        try { localStorage.setItem(WP_KEY, JSON.stringify({ date: todayStr(), name: chosen })); } catch (e) {}
-      });
+  // ── PALETTE SWITCHER ─────────────────────
+  const PALETTES = [
+    { id: '',         name: 'Terracota', swatch: '#D06224' },
+    { id: 'sage',     name: 'Sálvia',    swatch: '#7A8A50' },
+    { id: 'ocean',    name: 'Oceano',    swatch: '#4A7B95' },
+    { id: 'lavender', name: 'Lavanda',   swatch: '#8A75B0' },
+    { id: 'forest',   name: 'Floresta',  swatch: '#4A6E2A' },
+  ];
+  const PALETTE_KEY = 'planning-repo:palette';
+
+  function applyPalette(id) {
+    const root = document.documentElement;
+    PALETTES.forEach(p => {
+      if (p.id) root.classList.toggle('palette-' + p.id, p.id === id);
+    });
+    try { localStorage.setItem(PALETTE_KEY, id || ''); } catch (e) {}
+    // Atualiza estado visual do selector
+    document.querySelectorAll('.palette-opt').forEach(btn => {
+      btn.classList.toggle('active', (btn.dataset.palette || '') === (id || ''));
+    });
+  }
+
+  function injectPaletteSelector() {
+    // music.html tem paleta verde fixa — não injetar selector lá
+    if (/music\.html$/.test(window.location.pathname)) return;
+    const intensity = document.getElementById('intensityCtrl');
+    if (!intensity || document.querySelector('.palette-ctrl')) return;
+    const el = document.createElement('div');
+    el.className = 'palette-ctrl';
+    el.innerHTML = PALETTES.map(p =>
+      `<button type="button" class="palette-opt" data-palette="${p.id}"
+        title="${p.name}" style="background: ${p.swatch};"
+        aria-label="Paleta ${p.name}"></button>`
+    ).join('');
+    intensity.parentNode.insertBefore(el, intensity);
+
+    el.querySelectorAll('.palette-opt').forEach(btn => {
+      btn.addEventListener('click', () => applyPalette(btn.dataset.palette || ''));
+    });
+
+    // Restaurar paleta salva
+    let saved = '';
+    try { saved = localStorage.getItem(PALETTE_KEY) || ''; } catch (e) {}
+    if (saved && PALETTES.some(p => p.id === saved)) {
+      applyPalette(saved);
+    } else {
+      applyPalette('');
     }
   }
 
   // ── BOOTSTRAP ─────────────────────────────
   function boot() {
     window.__originalTitle = document.title;
-    initWallpaper();
+    startWaveMotion();
+    injectPaletteSelector();
     injectMinimizeButton();
     injectPomoWidget();
     renderPomo();

@@ -3,8 +3,6 @@
    ============================================ */
 
 :root {
-  --wp-url: none;
-  --wp-a: 0.6;
   --paper: #F7F2E8;
   --paper-shade: #EFE9DC;
   --paper-deep: #E5DDCB;
@@ -136,24 +134,7 @@
     --rule: rgba(237, 228, 211, 0.22);
     --rule-soft: rgba(237, 228, 211, 0.11);
   }
-  body {
-    background-image:
-      radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
-        rgb(200 95 55 / calc(0.10 * var(--bg-a))) 0%, rgb(200 95 55 / calc(0.04 * var(--bg-a))) 35%, transparent 58%),
-      radial-gradient(ellipse 130% 80% at 50% 132%,
-        rgb(192 75 40 / calc(0.22 * var(--bg-a))) 0%, rgb(192 75 40 / calc(0.09 * var(--bg-a))) 38%,
-        rgb(192 75 40 / calc(0.02 * var(--bg-a))) 62%, transparent 78%),
-      radial-gradient(ellipse 90% 65% at -15% 106%,
-        rgb(208 90 40 / calc(0.16 * var(--bg-a))) 0%, rgb(208 90 40 / calc(0.06 * var(--bg-a))) 45%, transparent 70%),
-      radial-gradient(ellipse 82% 62% at 115% 100%,
-        rgb(175 65 30 / calc(0.14 * var(--bg-a))) 0%, rgb(175 65 30 / calc(0.05 * var(--bg-a))) 48%, transparent 72%),
-      radial-gradient(ellipse 62% 50% at 108% -5%,
-        rgb(180 125 45 / calc(0.10 * var(--bg-a))) 0%, rgb(180 125 45 / calc(0.04 * var(--bg-a))) 52%, transparent 72%),
-      radial-gradient(ellipse 48% 70% at -8% 45%,
-        rgb(120 110 40 / calc(0.09 * var(--bg-a))) 0%, rgb(120 110 40 / calc(0.03 * var(--bg-a))) 52%, transparent 72%),
-      radial-gradient(ellipse 55% 38% at 68% 52%,
-        rgb(180 120 45 / calc(0.05 * var(--bg-a))) 0%, transparent 65%);
-  }
+  /* No dark mode: usa o mesmo body background-image baseado em --pal-c*. */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -161,8 +142,6 @@ html {
   font-size: 16px;
   background: var(--paper);
 }
-
-/* Wallpaper agora vive apenas no topo do site, dentro do .today-panel. */
 
 body {
   font-family: var(--sans);
@@ -172,22 +151,32 @@ body {
   min-height: 100vh;
   font-feature-settings: "kern", "liga", "ss01";
   position: relative;
+  /* Fundo: 7 camadas de radial-gradient que usam --pal-c1..--pal-c7
+     (cada paleta sobrescreve esses triplets). --mx/--my são animados em
+     movimento sinusoidal lento pelo shared.js (ondas do mar). */
   background-image:
     radial-gradient(circle at var(--mx, 50%) var(--my, 75%),
-      rgb(200 95 35 / calc(0.13 * var(--bg-a))) 0%, rgb(200 95 35 / calc(0.05 * var(--bg-a))) 35%, transparent 58%),
+      rgb(var(--pal-c1) / calc(0.13 * var(--bg-a))) 0%,
+      rgb(var(--pal-c1) / calc(0.05 * var(--bg-a))) 35%, transparent 58%),
     radial-gradient(ellipse 130% 80% at 50% 132%,
-      rgb(174 67 30 / calc(0.30 * var(--bg-a))) 0%, rgb(174 67 30 / calc(0.13 * var(--bg-a))) 38%,
-      rgb(174 67 30 / calc(0.03 * var(--bg-a))) 62%, transparent 78%),
+      rgb(var(--pal-c2) / calc(0.30 * var(--bg-a))) 0%,
+      rgb(var(--pal-c2) / calc(0.13 * var(--bg-a))) 38%,
+      rgb(var(--pal-c2) / calc(0.03 * var(--bg-a))) 62%, transparent 78%),
     radial-gradient(ellipse 90% 65% at -15% 106%,
-      rgb(208 98 36 / calc(0.22 * var(--bg-a))) 0%, rgb(208 98 36 / calc(0.09 * var(--bg-a))) 45%, transparent 70%),
+      rgb(var(--pal-c3) / calc(0.22 * var(--bg-a))) 0%,
+      rgb(var(--pal-c3) / calc(0.09 * var(--bg-a))) 45%, transparent 70%),
     radial-gradient(ellipse 82% 62% at 115% 100%,
-      rgb(160 55 22 / calc(0.20 * var(--bg-a))) 0%, rgb(160 55 22 / calc(0.08 * var(--bg-a))) 48%, transparent 72%),
+      rgb(var(--pal-c4) / calc(0.20 * var(--bg-a))) 0%,
+      rgb(var(--pal-c4) / calc(0.08 * var(--bg-a))) 48%, transparent 72%),
     radial-gradient(ellipse 62% 50% at 108% -5%,
-      rgb(210 148 58 / calc(0.14 * var(--bg-a))) 0%, rgb(210 148 58 / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
+      rgb(var(--pal-c5) / calc(0.14 * var(--bg-a))) 0%,
+      rgb(var(--pal-c5) / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
     radial-gradient(ellipse 48% 70% at -8% 45%,
-      rgb(130 120 48 / calc(0.12 * var(--bg-a))) 0%, rgb(130 120 48 / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
+      rgb(var(--pal-c6) / calc(0.12 * var(--bg-a))) 0%,
+      rgb(var(--pal-c6) / calc(0.05 * var(--bg-a))) 52%, transparent 72%),
     radial-gradient(ellipse 55% 38% at 68% 52%,
-      rgb(210 138 52 / calc(0.07 * var(--bg-a))) 0%, transparent 65%);
+      rgb(var(--pal-c7) / calc(0.07 * var(--bg-a))) 0%, transparent 65%);
+  transition: background-color 0.6s ease;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -1627,87 +1616,57 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================
+   PALETTE SELECTOR (ao lado do regulador ◐)
+   ============================================ */
+
+.palette-ctrl {
+  position: fixed;
+  top: 0.75rem;
+  right: calc(0.75rem + 110px);   /* logo à esquerda do intensity-ctrl */
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--paper-shade);
+  border: 1px solid var(--rule);
+  padding: 4px 7px;
+  border-radius: 2px;
+  z-index: 200;
+  opacity: 0.35;
+  transition: opacity 0.25s;
+}
+
+.palette-ctrl:hover { opacity: 1; }
+
+.palette-opt {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  background-clip: padding-box;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.palette-opt:hover { transform: scale(1.18); }
+
+.palette-opt.active {
+  border-color: var(--ink);
+  transform: scale(1.12);
+}
+
+/* ============================================
    TODAY PANEL (dashboard — relógio, saudação, foco)
    ============================================ */
 
 .today-panel {
-  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 1.5rem 2rem;
   align-items: end;
   margin-bottom: 2.5rem;
-  padding: 2rem 2rem 2.5rem 1.5rem;
+  padding-bottom: 2rem;
   border-bottom: 1px solid var(--rule);
-  isolation: isolate;
-}
-
-/* Wallpaper só no topo: cobre o today-panel, faz fade out para o paper
-   na borda inferior, deixando o gradient terracota/oliva tomar conta abaixo. */
-.today-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: -70px;   /* estende a imagem para fora do retângulo, criando bleed */
-  background-image: var(--wp-url);
-  background-size: cover;
-  background-position: center 35%;
-  background-repeat: no-repeat;
-  opacity: var(--wp-a, 0.6);
-  filter: saturate(0.85) contrast(0.94);
-  z-index: -2;
-  -webkit-mask-image: linear-gradient(to bottom,
-    rgba(0,0,0,1) 0%, rgba(0,0,0,1) 35%,
-    rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.45) 82%, rgba(0,0,0,0) 100%);
-          mask-image: linear-gradient(to bottom,
-    rgba(0,0,0,1) 0%, rgba(0,0,0,1) 35%,
-    rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.45) 82%, rgba(0,0,0,0) 100%);
-  animation: wp-fade-in 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
-  transition: opacity 0.5s ease, background-image 0.5s ease;
-}
-
-/* Véu tinta sobre o wallpaper, no tom paper. Acompanha o bleed da imagem. */
-.today-panel::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: -70px;
-  background:
-    linear-gradient(135deg,
-      rgb(208 98 36 / 0.10) 0%,
-      transparent 35%,
-      rgb(122 123 50 / 0.08) 75%,
-      rgb(208 98 36 / 0.06) 100%),
-    linear-gradient(to bottom,
-      rgb(247 242 232 / 0.20) 0%,
-      rgb(247 242 232 / 0.50) 60%,
-      rgb(247 242 232 / 0) 100%);
-  z-index: -1;
-  pointer-events: none;
-  animation: wp-fade-in 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-@keyframes wp-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@media (prefers-color-scheme: dark) {
-  .today-panel::after {
-    background:
-      linear-gradient(135deg,
-        rgb(208 98 36 / 0.16) 0%,
-        transparent 35%,
-        rgb(122 123 50 / 0.12) 75%,
-        rgb(208 98 36 / 0.08) 100%),
-      linear-gradient(to bottom,
-        rgb(27 24 20 / 0.30) 0%,
-        rgb(27 24 20 / 0.65) 100%);
-  }
 }
 
 @media (max-width: 640px) {
@@ -2080,6 +2039,243 @@ body:has(.mini-player.active.minimized) .pomo-widget {
 }
 
 .pomo-btn.primary:hover { opacity: 0.85; }
+
+.pomo-focus-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 0.75rem;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-tint);
+  font-size: 13px;
+}
+
+.pomo-focus-line[hidden] { display: none; }
+
+.pomo-focus-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  flex-shrink: 0;
+}
+
+.pomo-focus-text {
+  font-family: var(--serif);
+  font-style: italic;
+  font-variation-settings: "opsz" 14;
+  color: var(--ink);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pomo-focus-clear {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 4px;
+}
+.pomo-focus-clear:hover { color: var(--danger); }
+
+/* Lista rápida dentro do pomo-panel */
+.pomo-ql {
+  margin-top: 0.875rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pomo-ql-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.pomo-ql-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.pomo-ql-count {
+  font-family: var(--serif);
+  font-style: italic;
+  font-variation-settings: "opsz" 14;
+  font-size: 0.9rem;
+  color: var(--accent);
+  font-feature-settings: "tnum";
+}
+
+.pomo-ql-count.zero { color: var(--ink-faint); }
+
+.pomo-ql-items {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+
+.pomo-ql-empty {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.pomo-ql-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.pomo-ql-item:last-of-type { border-bottom: none; }
+
+.pomo-ql-item.focus {
+  background: var(--accent-tint);
+  border-left: 2px solid var(--accent);
+  padding-left: 6px;
+  margin-left: -4px;
+}
+
+.pomo-ql-item .task-cb {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pomo-ql-text {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.35;
+  cursor: text;
+  padding: 1px 3px;
+  outline: none;
+  font-family: var(--sans);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pomo-ql-item.done .pomo-ql-text {
+  text-decoration: line-through;
+  color: var(--ink-faint);
+}
+
+.pomo-ql-text[contenteditable="true"] {
+  white-space: normal;
+  text-overflow: clip;
+  background: var(--paper-shade);
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.pomo-ql-focus, .pomo-ql-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 4px;
+  transition: color 0.15s;
+}
+
+.pomo-ql-focus {
+  color: var(--ink-faint);
+  font-size: 14px;
+}
+.pomo-ql-focus:hover { color: var(--accent); }
+.pomo-ql-item.focus .pomo-ql-focus { color: var(--accent); }
+
+.pomo-ql-del {
+  color: var(--ink-faint);
+  font-family: var(--serif);
+}
+.pomo-ql-del:hover { color: var(--danger); }
+
+.pomo-ql-add {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pomo-ql-add input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 12px;
+  padding: 5px 8px;
+  border: 1px solid var(--rule);
+  background: var(--paper-shade);
+  color: var(--ink);
+  border-radius: 2px;
+  outline: none;
+}
+.pomo-ql-add input:focus { border-color: var(--accent); }
+
+.pomo-ql-add button {
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 4px 10px;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.pomo-ql-add button:hover { opacity: 0.85; }
+
+/* Settings collapsible */
+.pomo-settings-details {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pomo-settings-details summary {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  cursor: pointer;
+  outline: none;
+  list-style: none;
+  user-select: none;
+}
+
+.pomo-settings-details summary::-webkit-details-marker { display: none; }
+.pomo-settings-details summary::before {
+  content: '▸ ';
+  font-family: var(--serif);
+  font-size: 9px;
+  margin-right: 4px;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+.pomo-settings-details[open] summary::before { transform: rotate(90deg); }
+
+.pomo-settings-details .pomo-settings {
+  margin-top: 0.5rem;
+  padding-top: 0;
+  border-top: none;
+}
 
 .pomo-settings {
   display: flex;
