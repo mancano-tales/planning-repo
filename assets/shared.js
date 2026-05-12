@@ -756,11 +756,18 @@
 
   // ── PALETTE SWITCHER ─────────────────────
   const PALETTES = [
-    { id: '',         name: 'Terracota', swatch: '#D06224' },
-    { id: 'sage',     name: 'Sálvia',    swatch: '#7A8A50' },
-    { id: 'ocean',    name: 'Oceano',    swatch: '#4A7B95' },
-    { id: 'lavender', name: 'Lavanda',   swatch: '#8A75B0' },
-    { id: 'forest',   name: 'Floresta',  swatch: '#4A6E2A' },
+    { id: '',         name: 'Terracota',     swatch: '#D06224' },
+    { id: 'sage',     name: 'Sálvia',        swatch: '#7A8A50' },
+    { id: 'ocean',    name: 'Oceano',        swatch: '#4A7B95' },
+    { id: 'lavender', name: 'Lavanda',       swatch: '#8A75B0' },
+    { id: 'forest',   name: 'Floresta',      swatch: '#4A6E2A' },
+    // Misturas de duas cores
+    { id: 'sunset',   name: 'Pôr do Sol',    swatch: 'linear-gradient(135deg, #C56F4A 50%, #A8758E 50%)' },
+    { id: 'seasand',  name: 'Areia & Mar',   swatch: 'linear-gradient(135deg, #C0AC78 50%, #4A8C8C 50%)' },
+    { id: 'grove',    name: 'Bosque',        swatch: 'linear-gradient(135deg, #6F8050 50%, #8F85A5 50%)' },
+    { id: 'autumn',   name: 'Outono',        swatch: 'linear-gradient(135deg, #C26830 50%, #806B30 50%)' },
+    // Dark
+    { id: 'noite',    name: 'Noite',         swatch: '#1B1E2A' },
   ];
   const PALETTE_KEY = 'planning-repo:palette';
 

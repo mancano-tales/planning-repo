@@ -239,8 +239,21 @@ function projectCardHTML(meta, project, index) {
       <article class="project-card ${active ? 'active' : ''} ${done ? 'done' : ''}">
         <div class="project-roman">${ROMAN[index] || (index + 1)}</div>
         <div class="project-info">
-          <h3 class="project-name">${escapeHtml(meta.name)}</h3>
-          ${meta.subtitle ? `<p class="project-subtitle">${escapeHtml(meta.subtitle)}</p>` : ''}
+          <h3 class="project-name">
+            <span class="project-name-text editable" data-id="${escapeHtml(meta.id)}" data-field="name"
+                  title="Clique no lápis para editar"
+                  >${escapeHtml(meta.name)}</span>
+            <button type="button" class="project-name-edit" data-id="${escapeHtml(meta.id)}" data-field="name"
+                    aria-label="Editar nome do projeto">✎</button>
+          </h3>
+          ${meta.subtitle ? `<p class="project-subtitle">
+            <span class="project-subtitle-text editable" data-id="${escapeHtml(meta.id)}" data-field="subtitle">${escapeHtml(meta.subtitle)}</span>
+            <button type="button" class="project-name-edit" data-id="${escapeHtml(meta.id)}" data-field="subtitle"
+                    aria-label="Editar subtítulo">✎</button>
+          </p>` : `<p class="project-subtitle empty">
+            <button type="button" class="project-name-edit add" data-id="${escapeHtml(meta.id)}" data-field="subtitle"
+                    aria-label="Adicionar subtítulo">+ subtítulo</button>
+          </p>`}
           <div class="project-meta-row">
             <span><span class="dot ${statusDot}"></span>${statusLabel}</span>
             <span>Fase: ${escapeHtml(currentLabel)}</span>
@@ -361,7 +374,8 @@ async function render() {
     return;
   }
 
-  // Aplica ordem customizada salva (drag-and-drop do usuário)
+  // Aplica overrides de nome/subtítulo + ordem customizada salva
+  manifest.projects = applyManifestOverrides(manifest.projects);
   manifest.projects = applyProjectOrder(manifest.projects);
   const hasCustomOrder = !!loadProjectOrder();
 
@@ -418,7 +432,134 @@ async function render() {
   listEl.innerHTML = ranked.map((r, i) => projectCardHTML(r.meta, r.project, i)).join('');
 
   installProjectDnD();
+  installProjectInlineEdit();
   renderAgenda(manifest.projects, projects);
+}
+
+// ── EDIT inline de nome/subtítulo nos cards do dashboard ──
+function installProjectInlineEdit() {
+  document.querySelectorAll('.project-name-edit').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const id = btn.dataset.id;
+      const field = btn.dataset.field;
+      startProjectFieldEdit(id, field, btn);
+    });
+  });
+  // Permitir click direto no texto também — desativa a navegação
+  document.querySelectorAll('.project-name-text, .project-subtitle-text').forEach(span => {
+    span.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      startProjectFieldEditOnSpan(span);
+    });
+  });
+}
+
+async function startProjectFieldEdit(id, field, btn) {
+  const card = btn.closest('.project-card-link');
+  if (!card) return;
+  let span = card.querySelector(field === 'name' ? '.project-name-text' : '.project-subtitle-text');
+  if (!span) {
+    // Caso "+ subtítulo" — substitui o botão por um span editável
+    const p = btn.closest('.project-subtitle');
+    if (!p) return;
+    span = document.createElement('span');
+    span.className = 'project-subtitle-text editable';
+    span.dataset.id = id;
+    span.dataset.field = 'subtitle';
+    span.textContent = '';
+    p.innerHTML = '';
+    p.appendChild(span);
+    p.appendChild(btn);
+  }
+  startProjectFieldEditOnSpan(span);
+}
+
+function startProjectFieldEditOnSpan(span) {
+  const card = span.closest('.project-card-link');
+  if (card) card.classList.add('editing');   // desativa drag/nav durante edit
+  const id = span.dataset.id;
+  const field = span.dataset.field;
+  const original = span.textContent;
+  span.contentEditable = 'true';
+  span.focus();
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  let committed = false;
+  function finish(save) {
+    if (committed) return;
+    committed = true;
+    span.contentEditable = 'false';
+    span.removeEventListener('blur', onBlur);
+    span.removeEventListener('keydown', onKey);
+    if (card) card.classList.remove('editing');
+    const newVal = span.textContent.trim();
+    if (save) {
+      saveProjectField(id, field, newVal).then(() => {
+        // Re-render para refletir
+        render();
+      });
+    } else {
+      span.textContent = original;
+    }
+  }
+  function onBlur() { finish(true); }
+  function onKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { finish(false); }
+  }
+  span.addEventListener('blur', onBlur);
+  span.addEventListener('keydown', onKey);
+}
+
+// Persiste o name/subtitle no localStorage do projeto + no manifest overrides
+const MANIFEST_OVERRIDES_KEY = 'planning-repo:manifest-overrides';
+async function saveProjectField(id, field, value) {
+  // Atualiza o JSON do projeto no localStorage (afeta a página do projeto)
+  const projKey = STORAGE_PREFIX + id;
+  try {
+    const raw = localStorage.getItem(projKey);
+    let proj = raw ? JSON.parse(raw) : null;
+    if (!proj) {
+      const res = await fetch('projects/' + id + '.json?t=' + Date.now());
+      if (res.ok) proj = await res.json();
+    }
+    if (proj) {
+      if (field === 'name') proj.name = value || proj.name;
+      else if (field === 'subtitle') proj.subtitle = value;
+      proj.lastUpdated = new Date().toISOString();
+      localStorage.setItem(projKey, JSON.stringify(proj));
+    }
+  } catch (e) {}
+  // Override no manifest para que o card e dropdowns reflitam
+  try {
+    const raw = localStorage.getItem(MANIFEST_OVERRIDES_KEY);
+    const ov = raw ? JSON.parse(raw) : {};
+    if (!ov[id]) ov[id] = {};
+    if (field === 'name') ov[id].name = value || ov[id].name;
+    else if (field === 'subtitle') ov[id].subtitle = value;
+    localStorage.setItem(MANIFEST_OVERRIDES_KEY, JSON.stringify(ov));
+  } catch (e) {}
+}
+
+function applyManifestOverrides(manifestProjects) {
+  let ov = {};
+  try {
+    const raw = localStorage.getItem(MANIFEST_OVERRIDES_KEY);
+    if (raw) ov = JSON.parse(raw) || {};
+  } catch (e) {}
+  return manifestProjects.map(p => {
+    const o = ov[p.id];
+    if (!o) return p;
+    return { ...p, name: o.name !== undefined ? o.name : p.name,
+                  subtitle: o.subtitle !== undefined ? o.subtitle : p.subtitle };
+  });
 }
 
 function renderAgenda(metas, projects) {
@@ -555,6 +696,15 @@ function updateClock() {
   if (el) el.innerHTML = h + '<span class="sep">:</span>' + m;
 }
 
+const USER_NAME_KEY = 'planning-repo:user-name';
+function getUserName() {
+  try { return localStorage.getItem(USER_NAME_KEY) || 'Tales'; }
+  catch (e) { return 'Tales'; }
+}
+function setUserName(n) {
+  try { localStorage.setItem(USER_NAME_KEY, n); } catch (e) {}
+}
+
 function updateGreeting() {
   const h = new Date().getHours();
   let g;
@@ -563,7 +713,44 @@ function updateGreeting() {
   else if (h < 18) g = 'Boa tarde';
   else g = 'Boa noite';
   const el = document.getElementById('todayGreeting');
-  if (el) el.innerHTML = g + ', <em>Tales</em>';
+  if (!el) return;
+  const safeName = String(getUserName()).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+  el.innerHTML = g + ', <em class="editable" id="userName" title="Clique para editar seu nome">' + safeName + '</em>';
+  // Reata os handlers porque o innerHTML foi sobrescrito
+  const nameEl = document.getElementById('userName');
+  if (nameEl) {
+    nameEl.addEventListener('click', () => startUserNameEdit(nameEl));
+  }
+}
+
+function startUserNameEdit(el) {
+  if (el.isContentEditable) return;
+  el.contentEditable = 'true';
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  function finish(save) {
+    el.contentEditable = 'false';
+    el.removeEventListener('blur', onBlur);
+    el.removeEventListener('keydown', onKey);
+    const txt = el.textContent.trim();
+    if (save && txt) {
+      setUserName(txt);
+    }
+    updateGreeting();
+  }
+  function onBlur() { finish(true); }
+  function onKey(e) {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') { finish(false); }
+  }
+  el.addEventListener('blur', onBlur);
+  el.addEventListener('keydown', onKey);
 }
 
 function updateDate() {

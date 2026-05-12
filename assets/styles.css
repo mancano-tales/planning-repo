@@ -114,6 +114,112 @@
   --pal-c7: 100 130 80;
 }
 
+/* Pôr do Sol — terracota + lavanda dusty (sunset glow) */
+:root.palette-sunset {
+  --paper: #F3EDE5;
+  --paper-shade: #E9E2D6;
+  --paper-deep: #DBD0C0;
+  --accent: #C56F4A;
+  --accent-deep: #964828;
+  --accent-soft: #DC9A78;
+  --accent-tint: #F3DBC8;
+  --done: #A8758E;
+  --done-tint: #ECDAE2;
+  --pal-c1: 220 130 95;
+  --pal-c2: 195 95 75;
+  --pal-c3: 200 120 145;
+  --pal-c4: 165 95 110;
+  --pal-c5: 230 175 120;
+  --pal-c6: 180 130 145;
+  --pal-c7: 215 140 110;
+}
+
+/* Areia & Mar — bege quente + teal/seafoam */
+:root.palette-seasand {
+  --paper: #F0EEE5;
+  --paper-shade: #E5E2D2;
+  --paper-deep: #D4D0BE;
+  --accent: #4A8C8C;
+  --accent-deep: #2D6868;
+  --accent-soft: #75AFAF;
+  --accent-tint: #D2E4E4;
+  --done: #B89B5F;
+  --done-tint: #EFE6CC;
+  --pal-c1: 100 145 145;
+  --pal-c2: 75 115 120;
+  --pal-c3: 175 165 130;
+  --pal-c4: 60 95 100;
+  --pal-c5: 200 185 145;
+  --pal-c6: 110 130 130;
+  --pal-c7: 145 165 145;
+}
+
+/* Bosque — sálvia + lavanda (forest spa) */
+:root.palette-grove {
+  --paper: #EFEEE5;
+  --paper-shade: #E4E2D4;
+  --paper-deep: #D2D0C0;
+  --accent: #6F8050;
+  --accent-deep: #4F6035;
+  --accent-soft: #92A475;
+  --accent-tint: #DCE3CC;
+  --done: #8F85A5;
+  --done-tint: #E0DCEA;
+  --pal-c1: 130 145 110;
+  --pal-c2: 100 115 80;
+  --pal-c3: 165 155 175;
+  --pal-c4: 80 95 60;
+  --pal-c5: 175 165 135;
+  --pal-c6: 130 125 155;
+  --pal-c7: 145 155 130;
+}
+
+/* Outono — terracota + oliva (mistura) */
+:root.palette-autumn {
+  --paper: #F3EFE3;
+  --paper-shade: #E8E3D1;
+  --paper-deep: #D7CFBA;
+  --accent: #C26830;
+  --accent-deep: #8E4A1E;
+  --accent-soft: #DC8E58;
+  --accent-tint: #F0DDC4;
+  --done: #806B30;
+  --done-tint: #E2D9B6;
+  --pal-c1: 200 95 35;
+  --pal-c2: 150 110 50;
+  --pal-c3: 210 120 60;
+  --pal-c4: 130 90 40;
+  --pal-c5: 195 165 80;
+  --pal-c6: 100 100 50;
+  --pal-c7: 180 135 70;
+}
+
+/* Noite — paleta escura (dark) */
+:root.palette-noite {
+  --paper: #1B1E2A;
+  --paper-shade: #252836;
+  --paper-deep: #2F3344;
+  --ink: #E2DDCB;
+  --ink-soft: #C0B9A4;
+  --ink-mute: #8B8576;
+  --ink-faint: #5A554A;
+  --accent: #C4955A;
+  --accent-deep: #9A6F38;
+  --accent-soft: #DCB07A;
+  --accent-tint: #3A2E1C;
+  --done: #8AA2B5;
+  --done-tint: #283440;
+  --rule: rgba(226, 221, 203, 0.22);
+  --rule-soft: rgba(226, 221, 203, 0.10);
+  --pal-c1: 196 149 90;
+  --pal-c2: 154 111 56;
+  --pal-c3: 138 162 181;
+  --pal-c4: 100 75 50;
+  --pal-c5: 175 145 100;
+  --pal-c6: 100 120 145;
+  --pal-c7: 145 115 90;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --paper: #1B1814;
@@ -271,26 +377,45 @@ a { color: inherit; text-decoration: none; }
 
 .meta-value.accent { color: var(--accent); }
 
-/* Campos editáveis no header do projeto (título, subtítulo, prazo) */
+/* Campos editáveis (título de projeto, subtítulo, prazo, nome de usuário…) */
 .editable {
   cursor: text;
   border-radius: 2px;
   padding: 1px 4px;
   margin: 0 -4px;
-  transition: background 0.15s, outline-color 0.15s;
+  transition: background 0.15s, outline-color 0.15s, box-shadow 0.15s;
   outline: 1px solid transparent;
   outline-offset: 1px;
+  position: relative;
+}
+
+.editable::after {
+  content: '✎';
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 0.55em;
+  color: var(--accent);
+  opacity: 0;
+  margin-left: 6px;
+  vertical-align: middle;
+  transition: opacity 0.15s;
+  pointer-events: none;
 }
 
 .editable:hover {
   background: var(--paper-shade);
+  box-shadow: 0 0 0 1px var(--rule-soft);
 }
+
+.editable:hover::after { opacity: 0.65; }
 
 .editable[contenteditable="true"] {
   background: var(--paper-shade);
   outline-color: var(--accent);
   cursor: text;
 }
+
+.editable[contenteditable="true"]::after { opacity: 0; }
 
 #projectTitle.editable { cursor: text; }
 #deadlineLabel.editable { cursor: pointer; }
@@ -595,6 +720,54 @@ a { color: inherit; text-decoration: none; }
   font-style: italic;
   font-family: var(--serif);
 }
+
+.project-subtitle.empty { margin-top: 0.15rem; }
+
+/* Botão ✎ inline ao lado do nome/subtítulo nos cards do dashboard */
+.project-name-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  padding: 0 4px;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  vertical-align: middle;
+  line-height: 1;
+}
+.project-name-edit.add {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  text-transform: lowercase;
+  padding: 1px 6px;
+  border: 1px dashed var(--rule);
+  border-radius: 2px;
+}
+
+.project-card:hover .project-name-edit { opacity: 0.8; }
+.project-name-edit:hover { color: var(--accent); opacity: 1; }
+
+.project-name-text[contenteditable="true"],
+.project-subtitle-text[contenteditable="true"] {
+  background: var(--paper-shade);
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+  cursor: text;
+  display: inline-block;
+  min-width: 100px;
+}
+
+/* Durante edit, o anchor não navega */
+.project-card-link.editing { pointer-events: none; }
+.project-card-link.editing .project-name-text,
+.project-card-link.editing .project-subtitle-text,
+.project-card-link.editing .project-name-edit { pointer-events: auto; }
 
 .project-meta-row {
   display: flex;
@@ -1658,9 +1831,12 @@ a { color: inherit; text-decoration: none; }
 
 .palette-ctrl {
   position: fixed;
-  top: 0.75rem;
-  right: calc(0.75rem + 110px);   /* logo à esquerda do intensity-ctrl */
+  top: calc(0.75rem + 30px);   /* logo abaixo do intensity-ctrl */
+  right: 0.75rem;
   display: flex;
+  flex-wrap: wrap;
+  max-width: 130px;
+  justify-content: flex-end;
   align-items: center;
   gap: 5px;
   background: var(--paper-shade);
@@ -2372,6 +2548,34 @@ body:has(.mini-player.active.minimized) .pomo-widget {
 @media (max-width: 640px) {
   .pomo-panel { width: 240px; }
   .pomo-widget { bottom: 1rem; left: 1rem; }
+}
+
+/* Mobile em paisagem: pouca altura. Ancora o pomodoro no canto superior-
+   esquerdo (acima dos controles top-right que vão pra esquerda), e abre
+   o painel para baixo em vez de para cima. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .pomo-widget {
+    top: 0.5rem !important;
+    left: 0.5rem !important;
+    bottom: auto !important;
+    right: auto !important;
+  }
+  .pomo-panel {
+    bottom: auto;
+    top: calc(100% + 6px);
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    width: 280px;
+  }
+  /* Se o mini-player estiver ativo, manter ainda no topo */
+  body:has(.mini-player.active) .pomo-widget {
+    top: 0.5rem !important;
+    bottom: auto !important;
+  }
+  body:has(.mini-player.active.minimized) .pomo-widget {
+    bottom: auto !important;
+    top: 0.5rem !important;
+  }
 }
 
 /* ============================================
