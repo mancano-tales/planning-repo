@@ -1,7 +1,7 @@
 {
   "id": "dissertacao",
-  "name": "Dissertação de Mestrado",
-  "subtitle": "Finalização e depósito até setembro de 2026",
+  "name": "The Politics of Redistributing Tertiary Ed.",
+  "subtitle": "M.A. Thesis: finalização e depósito até setembro de 2026",
   "deadline": "2026-09-29",
   "lastUpdated": "2026-05-13T00:00:00.000Z",
   "phases": [
@@ -34,7 +34,7 @@
         },
         {
           "text": "Revisar perguntas de pesquisa no ¶2 da introdução (mecanismo vs. covariação)",
-          "done": false,
+          "done": true,
           "deadline": "2026-05-16"
         },
         {
