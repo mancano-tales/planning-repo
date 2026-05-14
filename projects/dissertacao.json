@@ -3,7 +3,7 @@
   "name": "Dissertação de Mestrado",
   "subtitle": "Finalização e depósito até setembro de 2026",
   "deadline": "2026-09-29",
-  "lastUpdated": "2026-05-12T11:18:08.728Z",
+  "lastUpdated": "2026-05-13T00:00:00.000Z",
   "phases": [
     {
       "id": "cap3",
@@ -28,28 +28,94 @@
           "done": true
         },
         {
-          "text": "Redigir introdução e revisão de literatura (EN)",
-          "done": false
+          "text": "Resolver FLAGs da introdução: nota de rodapé da citação de Paulo Renato e referência Jackson 2021",
+          "done": false,
+          "deadline": "2026-05-16"
         },
         {
-          "text": "Redigir seção metodológica (EN)",
-          "done": false
+          "text": "Revisar perguntas de pesquisa no ¶2 da introdução (mecanismo vs. covariação)",
+          "done": false,
+          "deadline": "2026-05-16"
         },
         {
-          "text": "Redigir seção de resultados e análise (EN)",
-          "done": false
+          "text": "Polish geral da introdução — versão final dos 8 parágrafos",
+          "done": false,
+          "deadline": "2026-05-17"
         },
         {
-          "text": "Redigir discussão e conclusão do artigo (EN)",
-          "done": false
+          "text": "Redigir Seção 2: parágrafos Ansell (lógica condicional) e Garritzmann (quatro regimes) em detalhe",
+          "done": false,
+          "deadline": "2026-05-19"
+        },
+        {
+          "text": "Redigir Seção 2: reframagem de descomodificação como clivagem central (Garritzmann-Seng, Veronese, Paglayan)",
+          "done": false,
+          "deadline": "2026-05-22"
+        },
+        {
+          "text": "Redigir Seção 2: educação como welfare state (Busemeyer-Nikolai), easy/hard redistribution (Holland-Schneider), e Fairfield-Garay como âncora teórica da conta alternativa",
+          "done": false,
+          "deadline": "2026-05-23"
+        },
+        {
+          "text": "Redigir Seção 2: Gomes (2024) e os limites da evidência macro; o que evidência mecanicista requer (parágrafo de fechamento da seção)",
+          "done": false,
+          "deadline": "2026-05-24"
+        },
+        {
+          "text": "Redigir Seção 3 completa: justificativa do process tracing, hierarquia de fontes, integração quanti-quali, justificativa do caso brasileiro",
+          "done": false,
+          "deadline": "2026-05-26"
+        },
+        {
+          "text": "Revisão de coesão Seções 1-2-3 como bloco: verificar que o argumento teórico prepara a análise empírica",
+          "done": false,
+          "deadline": "2026-05-27"
+        },
+        {
+          "text": "Redigir Seção 4.1 — FHC: restrição fiscal, guerra das mensalidades (MP 1477/1997), sistema de avaliação e fechamento de cursos, expansão pública simultânea, evidência de composição de renda do período",
+          "done": false,
+          "deadline": "2026-05-30"
+        },
+        {
+          "text": "Redigir Seção 4.2a — PT/ProUni: caminho por medida provisória, isenções fiscais para inst. privadas, 10% de vagas, sem perdedores identificáveis — easy redistribution, evidência de composição de renda dos beneficiários",
+          "done": false,
+          "deadline": "2026-06-03"
+        },
+        {
+          "text": "Redigir Seção 4.2b — PT/Cotas: 8 anos de luta legislativa (2004-2012), papel autônomo do movimento negro e organizações estudantis, resistência interna na coalizão governista, Paulo Renato como broker da oposição, evidência pós-2012",
+          "done": false,
+          "deadline": "2026-06-05"
+        },
+        {
+          "text": "Redigir Seção 4.3 — FIES: diluição progressiva do targeting via lobbying dos conglomerados, elevação dos tetos de renda elegível, evidência de composição de renda ao longo do tempo, pós-2016 (Temer/Bolsonaro/EAD) e Lula III",
+          "done": false,
+          "deadline": "2026-06-08"
+        },
+        {
+          "text": "Redigir Seção 5 — Discussão: scope conditions de Ansell/Garritzmann, generalizabilidade via Fairfield-Garay (América Latina como classe de casos), implicação metodológica (confirmação macro ≠ confirmação mecanicista)",
+          "done": false,
+          "deadline": "2026-06-11"
+        },
+        {
+          "text": "Revisão de coesão argumentativa do artigo completo — leitura do início ao fim",
+          "done": false,
+          "deadline": "2026-06-13"
+        },
+        {
+          "text": "Verificar citações BibTeX, notas de rodapé e word count (alvo: 9.500-10.500 palavras sem referências)",
+          "done": false,
+          "deadline": "2026-06-15"
         },
         {
           "text": "Rascunho completo enviado ao orientador",
-          "done": false
+          "done": false,
+          "deadline": "2026-06-17"
         },
         {
-          "text": "Revisão e polish — versão submissível a periódico",
-          "done": true
+          "text": "Revisão e polish pós-feedback — versão submissível a periódico",
+          "done": false,
+          "deadline": "2026-06-20"
         }
       ]
     },
@@ -68,32 +134,58 @@
           "done": true
         },
         {
-          "text": "Cruzar com dados ENEM via identificador mascarado",
-          "done": false
-        },
-        {
-          "text": "Definir estrutura e argumento descritivo do capítulo",
-          "done": false
-        },
-        {
           "text": "Produzir tabelas descritivas exploratórias",
           "done": true
         },
         {
-          "text": "Produzir figuras e visualizações",
-          "done": false
+          "text": "Cruzar dados SEDAP/Censo da Educação com ENEM via identificador mascarado",
+          "done": false,
+          "deadline": "2026-06-27"
         },
         {
-          "text": "Redigir narrativa analítica das tabelas e figuras",
-          "done": false
+          "text": "Calcular índices de desigualdade de acesso por governo e por setor (razão de quintos, proporção de renda baixa por segmento)",
+          "done": false,
+          "deadline": "2026-07-01"
         },
         {
-          "text": "Rascunho completo enviado ao orientador",
-          "done": false
+          "text": "Construir simulações contrafactuais: remover beneficiários de ProUni da composição e observar mudança na desigualdade",
+          "done": false,
+          "deadline": "2026-07-04"
         },
         {
-          "text": "Produzir tabelas descritivas finais",
-          "done": false
+          "text": "Construir simulações contrafactuais: remover beneficiários de FIES e observar mudança na composição de renda ao longo do tempo",
+          "done": false,
+          "deadline": "2026-07-07"
+        },
+        {
+          "text": "Construir simulações contrafactuais: remover cotistas das universidades públicas e observar mudança no perfil de acesso",
+          "done": false,
+          "deadline": "2026-07-09"
+        },
+        {
+          "text": "Construir simulações contrafactuais: remover matrículas EAD e for-profit do setor privado e observar impacto na composição",
+          "done": false,
+          "deadline": "2026-07-11"
+        },
+        {
+          "text": "Definir estrutura e argumento descritivo do capítulo — quais hipóteses os dados confirmam ou descartam",
+          "done": false,
+          "deadline": "2026-07-13"
+        },
+        {
+          "text": "Produzir figuras e visualizações finais para o argumento",
+          "done": false,
+          "deadline": "2026-07-17"
+        },
+        {
+          "text": "Redigir narrativa analítica das tabelas, figuras e simulações contrafactuais",
+          "done": false,
+          "deadline": "2026-07-21"
+        },
+        {
+          "text": "Rascunho completo do capítulo 2 enviado ao orientador",
+          "done": false,
+          "deadline": "2026-07-25"
         }
       ]
     },
@@ -104,40 +196,53 @@
       "end": "2026-08-22",
       "tasks": [
         {
-          "text": "Inventariar fichas e notas já produzidas (Zotero)",
-          "done": false
-        },
-        {
-          "text": "Decidir: manter unificado ou desmembrar em partes",
-          "done": false
-        },
-        {
-          "text": "Definir estrutura de seções e subseções",
-          "done": false
-        },
-        {
-          "text": "Integrar fichas na narrativa corrida",
-          "done": false
-        },
-        {
-          "text": "Escrever lacunas teóricas restantes (~25–35%)",
-          "done": false
-        },
-        {
-          "text": "Verificar cobertura bibliográfica — OpenAlex/Zotero",
-          "done": false
-        },
-        {
-          "text": "Rascunho completo enviado ao orientador",
-          "done": false
-        },
-        {
-          "text": "Revisão de coesão e argumentação",
-          "done": false
-        },
-        {
           "text": "Grosso da revisão de literatura",
           "done": true
+        },
+        {
+          "text": "Inventariar fichas e notas já produzidas (Zotero) e mapear lacunas de cobertura",
+          "done": false,
+          "deadline": "2026-07-28"
+        },
+        {
+          "text": "Definir estrutura de seções: (1) welfare state e educação, (2) estratificação educacional, (3) caso brasileiro e hipóteses",
+          "done": false,
+          "deadline": "2026-07-29"
+        },
+        {
+          "text": "Redigir seção 1.1 — Welfare state e educação: Esping-Andersen, Busemeyer (skill regimes), Garritzmann (quatro mundos do financiamento)",
+          "done": false,
+          "deadline": "2026-08-02"
+        },
+        {
+          "text": "Redigir seção 1.2 — A clivagem da descomodificação: Ansell, Garritzmann-Seng, Veronese, Paglayan — expansão vs. conteúdo redistributivo",
+          "done": false,
+          "deadline": "2026-08-05"
+        },
+        {
+          "text": "Redigir seção 1.3 — Estratificação educacional: MMI/EMI (Raftery-Hout, Lucas), Shavit-Blossfeld, e limitações para o caso brasileiro",
+          "done": false,
+          "deadline": "2026-08-09"
+        },
+        {
+          "text": "Redigir seção 1.4 — Atores não-partidários: Fairfield-Garay (2017), Tarlau, Paschel — conglomerados privados e movimentos sociais como coprodutores de política redistributiva",
+          "done": false,
+          "deadline": "2026-08-13"
+        },
+        {
+          "text": "Redigir seção 1.5 — O caso brasileiro no framework comparado: hipóteses derivadas para Caps 2 e 3",
+          "done": false,
+          "deadline": "2026-08-17"
+        },
+        {
+          "text": "Verificar cobertura bibliográfica — OpenAlex/Zotero — e preencher lacunas",
+          "done": false,
+          "deadline": "2026-08-19"
+        },
+        {
+          "text": "Rascunho completo do capítulo 1 enviado ao orientador",
+          "done": false,
+          "deadline": "2026-08-22"
         }
       ]
     },
@@ -148,24 +253,29 @@
       "end": "2026-09-01",
       "tasks": [
         {
-          "text": "Redigir texto de abertura da dissertação",
-          "done": false
+          "text": "Verificar coerência argumentativa entre os três capítulos — as hipóteses do Cap 1 são testadas nos Caps 2 e 3?",
+          "done": false,
+          "deadline": "2026-08-24"
         },
         {
-          "text": "Redigir transição entre Cap. 1 e Cap. 2",
-          "done": false
+          "text": "Redigir transição entre Cap 1 e Cap 2 — como o framework teórico orienta a análise quantitativa",
+          "done": false,
+          "deadline": "2026-08-26"
         },
         {
-          "text": "Redigir transição entre Cap. 2 e Cap. 3",
-          "done": false
+          "text": "Redigir transição entre Cap 2 e Cap 3 — como os achados quantitativos motivam o aprofundamento qualitativo",
+          "done": false,
+          "deadline": "2026-08-28"
         },
         {
-          "text": "Verificar coerência argumentativa entre os capítulos",
-          "done": false
+          "text": "Consolidar referências — Zotero → APA7 — e verificar consistência entre capítulos",
+          "done": false,
+          "deadline": "2026-08-30"
         },
         {
-          "text": "Consolidar referências — Zotero → APA7",
-          "done": false
+          "text": "Redigir texto de abertura da dissertação (preâmbulo contextual antes da introdução formal)",
+          "done": false,
+          "deadline": "2026-09-01"
         }
       ]
     },
@@ -184,20 +294,24 @@
           "done": true
         },
         {
-          "text": "Apresentar estrutura da dissertação",
-          "done": false
+          "text": "Sintetizar os argumentos centrais dos três capítulos em prosa contínua",
+          "done": false,
+          "deadline": "2026-09-03"
         },
         {
-          "text": "Revisão e ajuste fino",
-          "done": false
+          "text": "Apresentar estrutura da dissertação (roadmap das partes e capítulos)",
+          "done": false,
+          "deadline": "2026-09-04"
         },
         {
-          "text": "Sintetizar os argumentos da dissertação.",
-          "done": false
+          "text": "Redigir nota sobre contribuições teóricas e empíricas — o que a dissertação avança em relação à literatura",
+          "done": false,
+          "deadline": "2026-09-05"
         },
         {
-          "text": "Fazer o Roadmap da dissertação",
-          "done": false
+          "text": "Revisão e ajuste fino da introdução — tom, coesão, comprimento adequado",
+          "done": false,
+          "deadline": "2026-09-08"
         }
       ]
     },
@@ -208,20 +322,24 @@
       "end": "2026-09-15",
       "tasks": [
         {
-          "text": "Sintetizar contribuições de cada capítulo",
-          "done": false
+          "text": "Sintetizar contribuição de cada capítulo — o que cada um responde das perguntas de pesquisa",
+          "done": false,
+          "deadline": "2026-09-10"
         },
         {
-          "text": "Redigir argumento síntese da dissertação",
-          "done": false
+          "text": "Redigir argumento síntese da dissertação — a resposta conjunta às duas perguntas de pesquisa",
+          "done": false,
+          "deadline": "2026-09-11"
         },
         {
-          "text": "Apontar limitações do estudo",
-          "done": false
+          "text": "Apontar limitações do estudo — o que a dissertação não resolve e por quê",
+          "done": false,
+          "deadline": "2026-09-13"
         },
         {
-          "text": "Propor agenda futura de pesquisa",
-          "done": false
+          "text": "Propor agenda futura: extensão para outros países da AL, período pós-2022, efeitos de longo prazo das cotas",
+          "done": false,
+          "deadline": "2026-09-15"
         }
       ]
     },
@@ -233,35 +351,43 @@
       "tasks": [
         {
           "text": "Afastar-se da dissertação por 3–5 dias",
-          "done": false
+          "done": false,
+          "deadline": "2026-09-18"
         },
         {
-          "text": "Leitura completa do início ao fim",
-          "done": false
+          "text": "Leitura completa do início ao fim — marcando inconsistências, redundâncias e lacunas",
+          "done": false,
+          "deadline": "2026-09-20"
         },
         {
-          "text": "Correções de coesão e estilo",
-          "done": false
+          "text": "Correções de coesão e estilo — uniformizar voz, registro e terminologia entre os capítulos",
+          "done": false,
+          "deadline": "2026-09-22"
         },
         {
-          "text": "Formatação da Referências em APA7 — margens, fontes, sumário",
-          "done": false
+          "text": "Formatação final — margens, fontes, sumário, listas de figuras e tabelas conforme normas ABNT/USP",
+          "done": false,
+          "deadline": "2026-09-23"
         },
         {
-          "text": "Normalização das referências (Zotero)",
-          "done": false
+          "text": "Normalização das referências (Zotero) — conferir cada entrada contra a fonte original",
+          "done": false,
+          "deadline": "2026-09-24"
         },
         {
-          "text": "Verificar apêndices e códigos R",
-          "done": false
+          "text": "Verificar apêndices, tabelas suplementares e scripts R — reprodutibilidade e documentação",
+          "done": false,
+          "deadline": "2026-09-25"
         },
         {
           "text": "Submissão ao orientador para aval final",
-          "done": false
+          "done": false,
+          "deadline": "2026-09-26"
         },
         {
           "text": "Depósito no sistema institucional",
-          "done": true
+          "done": false,
+          "deadline": "2026-09-29"
         }
       ]
     }
