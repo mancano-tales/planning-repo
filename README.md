@@ -8,19 +8,37 @@ Gabinete de planejamento pessoal — projetos, prazos e fluxos de trabalho em ac
 
 ## Arquitetura
 
-Site estático que carrega projetos a partir de arquivos JSON. Cada projeto é um JSON em `projects/`. A landing lista todos; cada projeto tem sua página individual de tracking.
+Site estático que carrega projetos a partir de arquivos JSON. O dashboard (index) lista todos os projetos com relógio, foco do dia e agenda; cada projeto tem sua página individual de tracking com Gantt e cascata de prazo. Há também uma página de música de trabalho.
 
 ```
 planning-repo/
-├── index.html              # landing — lista todos os projetos
-├── project.html            # tracker individual (?id=xxx)
+├── index.html              # dashboard — relógio, foco, agenda, projetos, controles
+├── project.html            # tracker individual (?id=xxx) — fases, tarefas, Gantt
+├── music.html              # música de trabalho (YouTube embed, paleta verde)
 ├── projects/
-│   ├── manifest.json       # lista de projetos com metadata
-│   └── <id>.json           # estado de cada projeto
+│   ├── manifest.json       # índice dos projetos com metadata
+│   ├── dissertacao.json    # M.A. Thesis
+│   ├── antitrust.json      # Paper com André Nahoum
+│   └── schedelik.json      # Resenha com Eric Rinaldi
 ├── assets/
-│   └── styles.css          # estilos compartilhados
+│   ├── styles.css          # estilos compartilhados (~2900 linhas, paletas)
+│   └── shared.js           # pomodoro, mini-player, wallpaper/wave, paletas, quicklist
+├── CLAUDE.md               # documentação técnica detalhada do projeto
 └── README.md
 ```
+
+## Funcionalidades
+
+- **Dashboard** — relógio em tempo real, saudação editável, foco do dia, agenda com tarefas por prazo, cards de projetos com progresso
+- **Tracker de projeto** — fases com tarefas (checkbox + prazo opcional), gráfico Gantt com linha "hoje", cascata de prazo restante, badge de trajetória
+- **Pomodoro + Quicklist** — widget flutuante arrastável com timer, lista rápida de tarefas, sincroniza entre abas
+- **12 paletas de cores** — selecionáveis no painel do canto superior direito, incluindo tema escuro ("Noite")
+- **Slider de intensidade** — controla opacidade do fundo animado
+- **Animação de ondas** — fundo com blobs animados via requestAnimationFrame (respeita `prefers-reduced-motion`)
+- **Drag-and-drop** — reordena projetos no dashboard e tarefas dentro de fases
+- **Edição inline** — nome, subtítulo, prazo de projetos; texto e prazo de tarefas; nome do usuário
+- **Mini-player de música** — integrado via iframe de `music.html`, minimizável
+- **Import/Export** — exporta/importa JSONs de projetos e manifest para sincronização manual
 
 ## Como usar no dia a dia
 
@@ -53,12 +71,14 @@ Esse snapshot semanal é o que permite: (a) sincronizar entre dispositivos via b
       "start": "2026-05-10",
       "end": "2026-06-20",
       "tasks": [
-        { "text": "Descrição da tarefa", "done": false }
+        { "text": "Descrição da tarefa", "done": false, "deadline": "2026-06-15" }
       ]
     }
   ]
 }
 ```
+
+O campo `deadline` em tarefas é opcional (formato `YYYY-MM-DD`). Tarefas com prazo aparecem na **Agenda** do dashboard.
 
 ### Entrada no manifest
 
@@ -92,7 +112,11 @@ A página sempre prefere `localStorage` se ele existir (mais recente que o repo)
 
 ## Stack
 
-- HTML/CSS/JS vanilla, sem build step
-- Fontes: Fraunces + IBM Plex Sans/Mono (Google Fonts)
+- HTML/CSS/JS vanilla, sem build step nem framework
+- Fontes: Fraunces (serif) + IBM Plex Sans + IBM Plex Mono (Google Fonts)
 - Hospedagem: GitHub Pages
 - Persistência: `localStorage` (cliente) + arquivos JSON (servidor)
+
+## Documentação técnica
+
+Para detalhes sobre paletas, localStorage keys, convenções de código e comportamento de cada componente, consulte [`CLAUDE.md`](CLAUDE.md).
