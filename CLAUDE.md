@@ -1,5 +1,6 @@
-﻿# **Regra sobre Hard Links**: Agentes de IA **NÃO devem perder tempo** testando, auditando ou recriando hard links manualmente (mklink). O script de auto-cura automatizado (alidate-governance.R / setup) cuida disso sozinho. Foque estritamente no objetivo principal da tarefa.
+﻿  - **Hard Link Rule**: AI Agents **MUST NOT waste time** testing, auditing, or manually recreating hard links (mklink). Automated governance scripts (alidate-governance.R / setup) handle this automatically in the background. Focus strictly on your primary task.
 
+#
 # Gabinete de Planejamento — planning-repo
 
 Site estático (GitHub Pages) para acompanhamento de projetos pessoais de Tales Mancano.
@@ -197,4 +198,5 @@ Dentro de cada projeto (project.html):
   Section headings, labels e botões em sentence case.
 - `.gitignore` usa paths com `/` no início (`/styles.css` não pega
   `assets/styles.css`)
+
 
